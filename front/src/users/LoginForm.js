@@ -65,8 +65,8 @@ const Login = () => {
         </div>
       </form>
       <div class="flex flex-col items-center justify-center">
-        <p>Vous avez deja un compte ? </p>
-        <Link class="underline" to="/login">
+        <p>Vous n'avez pas encore de compte ? </p>
+        <Link class="underline" to="/register">
           Cliquez ici
         </Link>
       </div>

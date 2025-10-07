@@ -11,7 +11,7 @@ const Register = () => {
   const [errors, setErrors] = useState("");
   const navigate = useNavigate();
 
-  const gererSoumission = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
     setErrors("");
 
@@ -22,7 +22,9 @@ const Register = () => {
     if (response.data.error) {
       showToast("error", response.data.error);
     } else {
+      localStorage.setItem('token', response.data.token);
       showToast("success", response.data.message);
+      navigate(response.data.redirect);
     }
     console.log(response.data.user);
   };
@@ -32,7 +34,7 @@ const Register = () => {
       <h1 class="text-6xl font-caesar">Inscription</h1>
       <form
         class="flex items-center w-full justify-center gap-12 mt-[60px] mb-[30px]"
-        onSubmit={gererSoumission}
+        onSubmit={handleRegister}
       >
         <div class="flex flex-col gap-2 w-[30%]">
           <div class="flex flex-col items-center">
