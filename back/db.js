@@ -3,9 +3,9 @@ import sqlite3 from 'sqlite3';
 // Créer ou ouvrir une base de données (fichier 'mabdd.db')
 export const db = new sqlite3.Database('./database.db', (err) => {
   if (err) {
-    console.error('Erreur lors de la connexion à la base de données :', err.message);
+    console.error('Error connecting to the database: ', err.message);
   } else {
-    console.log('Connecté à la base de données SQLite.');
+    console.log('Connected to the SQLite database.');
   }
 });
 
@@ -64,7 +64,7 @@ export async function addUser(name, password) {
 
 export async function getUser(name) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT id, name FROM users WHERE name=?`, [name], (err, row) => {
+    db.get(`SELECT id, name, password FROM users WHERE name=?`, [name], (err, row) => {
       if (err) {
         resolve(null)
       } else {

@@ -17,72 +17,71 @@ const Register = () => {
 
     const response = await axios.post("http://localhost:4000/api/register", {
       name,
-      password: password,
+      password,
     });
     if (response.data.error) {
       showToast("error", response.data.error);
     } else {
       localStorage.setItem('token', response.data.token);
       showToast("success", response.data.message);
-      navigate(response.data.redirect);
+      navigate("/home");
     }
     console.log(response.data.user);
   };
 
   return (
-    <div class="flex flex-col items-center w-full">
-      <h1 class="text-6xl font-caesar">Inscription</h1>
+    <div className="flex flex-col items-center w-full">
+      <h1 className="text-6xl font-caesar">Inscription</h1>
       <form
-        class="flex items-center w-full justify-center gap-12 mt-[60px] mb-[30px]"
+        className="flex items-center w-full justify-center gap-12 mt-[60px] mb-[30px]"
         onSubmit={handleRegister}
       >
-        <div class="flex flex-col gap-2 w-[30%]">
-          <div class="flex flex-col items-center">
-            <label>Prénom</label>
+        <div className="flex flex-col gap-2 w-[30%]">
+          <div className="flex flex-col items-center">
+            <label>Name</label>
             <input
-              class="rounded text-center w-full ring-1 ring-gray-300"
+              className="rounded text-center w-full ring-1 ring-gray-300"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Entrez votre prénom"
+              placeholder="Entry your name"
             />
           </div>
-          <div class="flex flex-col items-center">
-            <label>Mot de passe</label>
+          <div className="flex flex-col items-center">
+            <label>Password</label>
             <input
-              class="rounded text-center w-full ring-1 ring-gray-300"
+              className="rounded text-center w-full ring-1 ring-gray-300"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Entrez votre mot de passe"
+              placeholder="Entry your password"
             />
           </div>
-          <div class="flex flex-col items-center">
-            <label>Confirmer mot de passe</label>
+          <div className="flex flex-col items-center">
+            <label>Confirm password</label>
             <input
-              class="rounded text-center w-full ring-1 ring-gray-300"
+              className="rounded text-center w-full ring-1 ring-gray-300"
               type="password"
               value={verifPassword}
               onChange={(e) => setVerifPassword(e.target.value)}
-              placeholder="Confirmer votre mot de passe"
+              placeholder="Confirm your password"
             />
           </div>
           <button
             disabled={
               !(name && password && verifPassword && password === verifPassword)
             }
-            class="mt-[20px] rounded ring-1 ring-gray-300"
+            className="mt-[20px] rounded ring-1 ring-gray-300"
             type="submit"
-            onClick={() => navigate("/home")}
           >
-            S'inscrire
+            Sign Up
           </button>
         </div>
       </form>
-      <div class="flex flex-col items-center justify-center">
-        <p>Vous avez deja un compte ? </p>
-        <Link class="underline" to="/login">
-          Cliquez ici
+      <div className="flex flex-col items-center justify-center">
+        <p>Do you already have an account? </p>
+        <Link className="underline" to="/login">
+          Click here
         </Link>
       </div>
     </div>
