@@ -11,63 +11,63 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const gererSoumission = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErrors('');
 
     const response = await axios.post('http://localhost:4000/api/login', {
       name,
-      password: password,
+      password,
     });
     if (response.data.error) {
       showToast("error", response.data.error)
     } else {
       showToast("success", response.data.message)
+      navigate("/home");
     }
     console.log(response.data.user);
   };
 
   return (
-    <div class="flex flex-col items-center w-full">
-      <h1 class="text-6xl font-caesar">Connexion</h1>
+    <div className="flex flex-col items-center w-full">
+      <h1 className="text-6xl font-caesar">Connexion</h1>
       <form
-        class="flex items-center w-full justify-center gap-12 mt-[60px] mb-[30px]"
-        onSubmit={gererSoumission}
+        className="flex items-center w-full justify-center gap-12 mt-[60px] mb-[30px]"
+        onSubmit={handleLogin}
       >
-        <div class="flex flex-col gap-2 w-[30%]">
-          <div class="flex flex-col items-center">
-            <label>Prénom</label>
+        <div className="flex flex-col gap-2 w-[30%]">
+          <div className="flex flex-col items-center">
+            <label>Name</label>
             <input
-              class="rounded text-center w-full ring-1 ring-gray-300"
+              className="rounded text-center w-full ring-1 ring-gray-300"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Entrez votre prénom"
+              placeholder="Entry your name"
             />
           </div>
-          <div class="flex flex-col items-center">
-            <label>Mot de passe</label>
+          <div className="flex flex-col items-center">
+            <label>Password</label>
             <input
-              class="rounded text-center w-full ring-1 ring-gray-300"
+              className="rounded text-center w-full ring-1 ring-gray-300"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Entrez votre mot de passe"
+              placeholder="Entry your password"
             />
           </div>
           <button
-            class="mt-[20px] rounded ring-1 ring-gray-300"
+            className="mt-[20px] rounded ring-1 ring-gray-300"
             type="submit"
-            onClick={() => navigate("/home")}
           >
-            S'inscrire
+            Sign In
           </button>
         </div>
       </form>
-      <div class="flex flex-col items-center justify-center">
-        <p>Vous n'avez pas encore de compte ? </p>
-        <Link class="underline" to="/register">
-          Cliquez ici
+      <div className="flex flex-col items-center justify-center">
+        <p>Don't have an account yet?</p>
+        <Link className="underline" to="/register">
+          Click here
         </Link>
       </div>
     </div>
