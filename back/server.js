@@ -10,7 +10,7 @@ import bcrypt from 'bcrypt';
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-const JWT_SECRET = 'coucou';
+const JWT_SECRET = '71dac283b6f89a9e6251c597c3f5e3c0';
 
 // Middleware pour vérifier le token
 const authenticateToken = (req, res, next) => {
