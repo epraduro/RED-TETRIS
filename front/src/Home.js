@@ -3,6 +3,9 @@ import { useState } from 'react';
 function Home() {
 	const [gameName, setGameName] = useState('');
 	const [playerName, setPlayerName] = useState('');
+	const [socket, setSocket] = useState(null);
+
+	
 
 	return (
 		<div className="w-full flex flex-col items-center justify-center">

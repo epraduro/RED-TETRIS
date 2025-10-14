@@ -16,7 +16,32 @@ db.serialize(() => {
     name TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL
   )`);
+  db.run(`CREATE TABLE IF NOT EXISTS games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player1 TEXT,
+    player2 TEXT,
+    owner TEXT NOT NULL
+  )`);
 });
+
+export async function createGame(player1) {
+  return new Promise((resolve, reject) => {
+    db.run(`INSERT INTO games (owner, player1) VALUES (?, ?)`, [player1, player1], function (err) {
+      if (err) {
+        resolve(null)
+      } else {
+        db.get("SELECT * FROM users WHERE id = ? ", [this.lastID], (err, row) => {
+          if (err) {
+            resolve(null)
+          } else {
+            console.log(row)
+            resolve(row)
+          }
+        })
+      }
+    });
+  })
+}
 
 export async function addUser(name, password) {
   return new Promise((resolve, reject) => {
