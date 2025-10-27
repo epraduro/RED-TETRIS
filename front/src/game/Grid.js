@@ -2,7 +2,7 @@ import GeneratePiece from "./GeneratePiece";
 import { useEffect, useState } from "react";
 import GenerateGrid from "./GenerateGrid";
 
-const REFRESH = 100000;
+const REFRESH = 1000;
 
 function Grid() {
   const pieces = {
@@ -100,26 +100,30 @@ function Grid() {
   }
 
   function newPiece() {
-	if (playerBag.length <= 2) {
-		playerBag.push(...getNewBag());
-	}
-	setCurrentPiece({
-		...pieces[playerBag.shift()],
-		x: 0,
-		y: 0
-	})
+    if (playerBag.length <= 2) {
+      playerBag.push(...getNewBag());
+    }
+    setCurrentPiece(prevState => {
+      return {
+        ...pieces[playerBag.shift()],
+        x: 0,
+        y: 0
+      }
+    })
   }
 
   const [currentPiece, setCurrentPiece] = useState(null);
 
   const update = () => {
     undraw();
-    currentPiece.x = currentPiece.x + 1;
+    if (currentPiece !== null) {
+      currentPiece.x = currentPiece.x + 1;
+    }
     draw();
   };
 
   const undraw = () => {
-    currentPiece.shape.map((row, i) => {
+    currentPiece?.shape.map((row, i) => {
       row.map((col, j) => {
         if (col !== 0) {
           grid[currentPiece.x + i][currentPiece.y + j] = "E";
@@ -130,7 +134,8 @@ function Grid() {
   };
 
   const draw = () => {
-    currentPiece.shape.map((row, i) => {
+    console.log(currentPiece);
+    currentPiece?.shape.map((row, i) => {
       row.map((col, j) => {
         if (col !== 0) {
           grid[currentPiece.x + i][currentPiece.y + j] = currentPiece.color;
@@ -145,14 +150,15 @@ function Grid() {
       update();
     }, REFRESH);
     return () => clearInterval(iter);
+  }, [currentPiece]);
+
+  useEffect(() => {
+    newPiece();
   }, []);
 
   useEffect(() => {
-	if (currentPiece === null) {
-		newPiece();
-	}
     draw();
-  }, []);
+  }, [currentPiece])
 
   return (
     <>

@@ -6,10 +6,7 @@
   "scripts": {
     "start:backend": "cd back && npm start",
     "start:frontend": "cd front && npm start",
-    "start": "concurrently --kill-others \"npm run start:backend\" \"npm run start:frontend\"",
-    "install:back": "cd back && npm install",
-    "install:front": "cd front && npm install",
-    "install": "concurrently --kill-others \"npm run install:back\" \"npm run install:front\""
+    "start": "concurrently --kill-others \"npm run start:backend\" \"npm run start:frontend\""
   },
   "keywords": [],
   "author": "",
