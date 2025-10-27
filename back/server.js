@@ -1,10 +1,12 @@
-import { addUser, getUser } from './db.js'
+import { addUser, getUser, addToken } from './db.js'
 import express  from 'express';
 import cors from 'cors'
 
 const app = express();
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+
+import { pieces, piecesColors } from './Pieces.js';
 
 // Middleware
 app.use(cors({ origin: '*' }));
@@ -26,10 +28,12 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+app.get('/api/pieces', (req, res) => {
+  res.json({ pieces, piecesColors });
+});
+
 app.post('/api/register', async (req, res) => {
   const { name, password } = req.body;
-
-  const hashedPassword = await bcrypt.hash(password, 10);
 
   if (!name || name.length < 2) {
     return res.status(200).json({ error: 'The name must be at least 2 characters long.' });
@@ -38,18 +42,32 @@ app.post('/api/register', async (req, res) => {
     return res.status(200).json({ error: 'The password must contain at least 6 characters.' });
   }
 
-  const user = await addUser(name, hashedPassword);
-  if (user) {
-    const token = jwt.sign(
-      { name },
-      JWT_SECRET,
-      { expiresIn: '1h'}
-    );
-    // res.json({token});
-    // res.json({ token, redirect: '/home' });
-    return res.json({ message: 'The player is successfully register', user, token });
-  } else {
-    return res.json({ error: 'These identifiers are already in use.' });
+  try {
+    // Hacher le mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Ajouter l'utilisateur
+    const user = await addUser(name, hashedPassword);
+    
+    // Générer le token JWT
+    const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, { expiresIn: '1h' });
+
+    // Mettre à jour le token dans la base
+    await addToken(token, user.name);
+
+    // Renvoyer le token et une indication pour le frontend
+    res.status(201).json({
+        message: 'Utilisateur enregistré avec succès',
+        user: { id: user.id, name: user.name },
+        token,
+        redirect: '/home' // Pour React Router
+    });
+  } catch (error) {
+      if (error.message.includes('UNIQUE constraint failed')) {
+          return res.status(400).json({ error: 'Ce nom est déjà utilisé.' });
+      }
+      console.error('Erreur serveur:', error);
+      res.status(500).json({ error: 'Erreur serveur lors de l\'enregistrement.' });
   }
 });
 

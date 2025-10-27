@@ -3,6 +3,7 @@ import Home from './Home';
 import Login from './users/LoginForm';
 import Register from './users/Register';
 import { ToastContainer } from 'react-toastify';
+import Grid from "./game/Grid";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
             <Route path='/home' element={<Home/>}/>
             <Route path='/register' element={<Register/>} />
             <Route path='/login' element={<Login/>} />
+            <Route path="/grid" element={<Grid/>} />
           </Routes>
       </Router>
       <ToastContainer/>

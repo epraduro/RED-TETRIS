@@ -26,7 +26,7 @@ const Register = () => {
       showToast("success", response.data.message);
       navigate("/home");
     }
-    console.log(response.data.user);
+    // console.log(response.data.user);
   };
 
   return (

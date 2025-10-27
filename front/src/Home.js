@@ -11,28 +11,40 @@ function Home() {
 	const [isConnected, setIsConnected] = useState(null);
 	const navigate = useNavigate();
 
-	const connectUser = async (e) => {
-		try {
-			const reponse = await axios.get('http://localhost:4000/api/home');
-			if (reponse.status === 200)
-			{
-				showToast("success", "youhou");
-			}
-		}
-		catch(error)
-		{
-			if (error.status === 401 || error.status === 403)
-			{
-				showToast("error", error.message);
-				navigate('/login');
-			}
-		}
-	}
+	const connectUser = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showToast('error', 'Aucun token trouvé. Veuillez vous connecter.');
+            navigate('/login');
+            return;
+        }
+
+        try {
+            const response = await axios.get('http://localhost:4000/api/home', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            setPlayerName(response.data.user.name); // Supposant que user.name est renvoyé
+            showToast('success', 'Connexion réussie !');
+            console.log('Réponse /api/home:', response.data);
+        } catch (error) {
+            if (error.response) {
+                showToast('error', error.response.data.error || 'Erreur lors de la connexion22');
+                if (error.response.status === 401 || error.response.status === 403) {
+                    navigate('/login');
+                }
+            } else {
+                showToast('error', 'Erreur réseau');
+                console.error('Erreur réseau:', error);
+            }
+        }
+    };
 
 	useEffect(() => 
 	{
 		connectUser();
-	});
+	}, []);
 
 	return (
 		<div className="w-full flex flex-col items-center justify-center">
@@ -40,8 +52,19 @@ function Home() {
 				RED-TETRIS
 			</p>
 			<div className="flex flex-col items-center">
-				<input className="flex flex-col gap-3 w-[40%] text-center" maxLength="10" placeholder="Entrer a name for create the game room" value={gameName} onChange={(e) => setGameName(e.target.value)} />
-				<button onClick={() => (window.location.href = `/${gameName}/${playerName}`)}> Creer </button>
+				<input 
+					className="flex flex-col gap-3 w-[40%] text-center" 
+					maxLength="10" 
+					placeholder="Entrer a name for create the game room" 
+					value={gameName} 
+					onChange={(e) => setGameName(e.target.value)} 
+				/>
+				<button
+                    onClick={() => navigate(`/${gameName}/${playerName}`)} // Utiliser navigate au lieu de window.location.href
+                    disabled={!gameName || !playerName}
+                > 
+					Creer 
+				</button>
 			</div>
 		</div>
 	);

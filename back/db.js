@@ -14,7 +14,8 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    token TEXT
   )`);
   db.run(`CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,6 +72,21 @@ export async function getUser(name) {
         resolve(row)
       }
     });
+  })
+}
+
+export async function addToken(token, name) {
+  return new Promise((resolve, reject) => {
+    console.log("je suis le token dans la database:", token)
+    db.run(`UPDATE users SET token = ? WHERE name = ?`, [token, name], function (err) {
+      if (err) {
+        return reject(err);
+      }
+      if (this.changes === 0) {
+          return reject(new Error('Utilisateur non trouvé'));
+      }
+      resolve(token);
+    })
   })
 }
 
