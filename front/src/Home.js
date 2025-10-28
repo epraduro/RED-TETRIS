@@ -6,10 +6,20 @@ import { useNavigate } from "react-router-dom";
 
 function Home() {
 	const [gameName, setGameName] = useState('');
-	const [playerName, setPlayerName] = useState('');
-	const [socket, setSocket] = useState(null);
+	const [playerName, setPlayerName] = useState("");
 	const [isConnected, setIsConnected] = useState(null);
 	const navigate = useNavigate();
+
+	const createGame = async () => {
+		try {
+			const reponse = await axios.post(`http://localhost:4000/games/${gameName}/${playerName}`);
+			if (reponse.status == 201)
+				navigate(`/games/${gameName}/${playerName}`);
+		}
+		catch {
+			showToast('error', 'An error has occured!');
+		}
+	}
 
 	const connectUser = async () => {
         const token = localStorage.getItem('token');
@@ -60,7 +70,7 @@ function Home() {
 					onChange={(e) => setGameName(e.target.value)} 
 				/>
 				<button
-                    onClick={() => navigate(`/${gameName}/${playerName}`)} // Utiliser navigate au lieu de window.location.href
+                    onClick={createGame} // Utiliser navigate au lieu de window.location.href
                     disabled={!gameName || !playerName}
                 > 
 					Creer 

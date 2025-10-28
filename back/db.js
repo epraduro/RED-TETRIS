@@ -20,21 +20,42 @@ db.serialize(() => {
   )`);
   db.run(`CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
     player1 TEXT,
-    player2 TEXT,
-    owner TEXT NOT NULL
+    owner TEXT NOT NULL,
+    status TEXT,
+    player2 TEXT
   )`);
 });
 
-export async function createGame(player1) {
+export async function updateGame(query, player_name, status, id) {
   return new Promise((resolve, reject) => {
-    db.run(`INSERT INTO games (owner, player1) VALUES (?, ?)`, [player1, player1], function (err) {
+    db.run(query,[player_name, status, id], function (err){
       if (err) {
-        resolve(null)
+        reject(err)
       } else {
-        db.get("SELECT * FROM users WHERE id = ? ", [this.lastID], (err, row) => {
+        db.get("SELECT * FROM games WHERE id = ? ", [id], (err, row) => {
           if (err) {
-            resolve(null)
+            reject(err)
+          } else {
+            console.log(row)
+            resolve(row)
+          }
+        })
+      }
+    });
+  })
+}
+
+export async function createGame(player1, name) {
+  return new Promise((resolve, reject) => {
+    db.run(`INSERT INTO games (name, player1, owner, status) VALUES (?, ?, ?, ?)`, [name, player1, player1, 'waiting'], function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        db.get("SELECT * FROM games WHERE id = ? ", [this.lastID], (err, row) => {
+          if (err) {
+            reject(err)
           } else {
             console.log(row)
             resolve(row)
@@ -123,4 +144,16 @@ export async function addToken(token, name) {
 
 export function closeDatabase() {
     db.close()
+}
+
+export async function getGame(name) {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT id, name, player1, player2, owner, status FROM games WHERE name=?`, [name], (err, row) => {
+      if (err) {
+        resolve(null)
+      } else {
+        resolve(row)
+      }
+    });
+  })
 }
