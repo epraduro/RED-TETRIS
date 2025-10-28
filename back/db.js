@@ -27,13 +27,13 @@ db.serialize(() => {
   )`);
 });
 
-export async function updateGame(id, player_name) {
+export async function updateGame(query, player_name, status, id) {
   return new Promise((resolve, reject) => {
-    db.run(`UPDATE games SET player2 = ?, status = 'active' WHERE id = ?`,[player_name, id], function (err){
+    db.run(query,[player_name, status, id], function (err){
       if (err) {
         reject(err)
       } else {
-        db.get("SELECT * FROM games WHERE id = ? ", [this.lastID], (err, row) => {
+        db.get("SELECT * FROM games WHERE id = ? ", [id], (err, row) => {
           if (err) {
             reject(err)
           } else {

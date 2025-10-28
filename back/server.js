@@ -98,10 +98,6 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-app.get('/api/username', async (req, res) => {
-  const user = await getUser()
-});
-
 // Route protégée pour la page d'accueil
 app.get('/api/home', authenticateToken, (req, res) => {
   res.json({ message: 'Welcome to the home page', user: req.user });
@@ -130,7 +126,8 @@ app.post('/games/:room/:player_name', async (req, res) => {
             }
             game.player2 = player.name;
             game.status = 'active';
-            game = await updateGame(player.id, player.name);
+            const query = updateQueryGame("player2");
+            game = await updateGame(query, player.name, 'active', game.id);
             console.log(`Joueur ${player_name} rejoint la partie ${game.id} comme player2`);
         }
 
@@ -139,6 +136,12 @@ app.post('/games/:room/:player_name', async (req, res) => {
         res.status(500).json({ error: `Erreur serveur : ${error.message}` });
     }
 });
+
+const updateQueryGame = (column) => 
+{
+  const query = `UPDATE games SET ${column} = ?, status = ? WHERE id = ?`;
+  return query;
+}
 
 server.on('upgrade', (request, socket, head) => {
   const host = request.headers['host'] || 'localhost:4000';
