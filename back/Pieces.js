@@ -1,57 +1,63 @@
 export const pieces = {
-	I:	[0, 0, 0, 0]
-		[1, 1, 1, 1]
-		[0, 0, 0, 0]
-		[0, 0, 0, 0],
-
-	O:	[1, 1]
-		[1, 1],
-	
-	J:	[1, 0, 0]
-		[1, 1, 1]
-		[0, 0, 0],
-	
-	T:	[0, 1, 0]
-		[1, 1, 1]
-		[0, 0, 0],
-	
-	L:	[0, 0, 1]
-		[1, 1, 1]
-		[0, 0, 0],
-
-	S: 	[0, 1, 1]
-		[1, 1, 0]
-		[0, 0, 0],
-
-	Z:	[1, 1, 0]
-		[0, 1, 1]
-		[0, 0, 0],
-}
+  I: [
+    [0, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ],
+  O: [
+    [1, 1],
+    [1, 1],
+  ],
+  J: [
+    [1, 0, 0],
+    [1, 1, 1],
+    [0, 0, 0],
+  ],
+  T: [
+    [0, 1, 0],
+    [1, 1, 1],
+    [0, 0, 0],
+  ],
+  L: [
+    [0, 0, 1],
+    [1, 1, 1],
+    [0, 0, 0],
+  ],
+  S: [
+    [0, 1, 1],
+    [1, 1, 0],
+    [0, 0, 0],
+  ],
+  Z: [
+    [1, 1, 0],
+    [0, 1, 1],
+    [0, 0, 0],
+  ],
+};
 
 export const piecesColors = {
-	I: 'cyan',
-		O: 'yellow',
-		J: 'blue',
-		T: 'purple',
-		L: 'orange',
-		S: 'green',
-		Z: 'red'
-}
+  I: "cyan",
+  O: "yellow",
+  J: "blue",
+  T: "purple",
+  L: "orange",
+  S: "green",
+  Z: "red",
+};
 
 class Test {
+  name;
 
-	name;
+  constructor(name) {
+    this.name = name;
+  }
 
-	constructor(name) {
-		this.name = name;
-	}
-
-	toto() {
-		console.log(`je suis toto ${this.name}`)
-	}
-
+  toto() {
+    console.log(`je suis toto ${this.name}`);
+  }
 }
 
-const t = new Test("andrew")
+const t = new Test("andrew");
 
-t.toto()
+t.toto();

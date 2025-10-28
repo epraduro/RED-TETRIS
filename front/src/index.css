@@ -30,3 +30,15 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.E {
+  background-color: gray;
+}
+
+.I {
+  background-color: blue;
+}
+
+.L {
+  background-color: orange;
+}

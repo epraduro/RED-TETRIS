@@ -4,6 +4,7 @@ import Game from "./game/Game";
 import Login from './users/LoginForm';
 import Register from './users/Register';
 import { ToastContainer } from 'react-toastify';
+import Grid from "./game/Grid";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path='/register' element={<Register/>} />
             <Route path='/login' element={<Login/>} />
             <Route path='/games/:gameName/:playerName' element={<Game/>} />
+            <Route path="/grid" element={<Grid/>} />
           </Routes>
       </Router>
       <ToastContainer/>
