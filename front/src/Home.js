@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 function Home() {
 	const [gameName, setGameName] = useState('');
-	const [playerName, setPlayerName] = useState('');
+	const [playerName, setPlayerName] = useState("");
 	const [socket, setSocket] = useState(null);
 	const [isConnected, setIsConnected] = useState(null);
 	const navigate = useNavigate();
@@ -29,10 +29,25 @@ function Home() {
 		}
 	}
 
+	const createGame = async (e) => {
+		console.log(playerName);
+		try 
+		{
+			const reponse = await axios.post(`http://localhost:4000/games/${gameName}/${playerName}`);
+			if (reponse.status === 201)
+				navigate(`/games/${gameName}/${playerName}`);
+		}
+		catch(error)
+		{
+			showToast("error", error.message);
+		}
+	}
+
 	useEffect(() => 
 	{
-		connectUser();
-	});
+		setPlayerName('pooba');
+		// connectUser();
+	}, [setPlayerName]);
 
 	return (
 		<div className="w-full flex flex-col items-center justify-center">
@@ -41,7 +56,7 @@ function Home() {
 			</p>
 			<div className="flex flex-col items-center">
 				<input className="flex flex-col gap-3 w-[40%] text-center" maxLength="10" placeholder="Entrer a name for create the game room" value={gameName} onChange={(e) => setGameName(e.target.value)} />
-				<button onClick={() => (window.location.href = `/${gameName}/${playerName}`)}> Creer </button>
+				<button onClick={createGame}> Creer </button>
 			</div>
 		</div>
 	);
