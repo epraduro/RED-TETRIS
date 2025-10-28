@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import jwt from "jsonwebtoken";
 
 // Créer ou ouvrir une base de données (fichier 'mabdd.db')
 export const db = new sqlite3.Database('./database.db', (err) => {
@@ -65,7 +66,38 @@ export async function addUser(name, password) {
 
 export async function getUser(name) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT id, name, password FROM users WHERE name=?`, [name], (err, row) => {
+    db.get(`SELECT id, name, password, token FROM users WHERE name=?`, [name], (err, row) => {
+      if (err) {
+        resolve(null)
+      } else {
+        resolve(row)
+      }
+    });
+  })
+}
+
+export async function verifyToken(user, secret) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(user.token, secret, async (err, decoded) => {
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          await deleteToken(user.name)
+          
+          const token = jwt.sign({ name: user.name, id: user.id }, secret, {
+            expiresIn: "1h",
+          });
+
+          await addToken(token, user.name);
+        }
+      }
+      resolve()
+    })
+  });
+}
+
+export async function deleteToken(name) {
+  return new Promise((resolve, reject) => {
+    db.get(`DELETE token FROM users WHERE name=?`, [name], (err, row) => {
       if (err) {
         resolve(null)
       } else {
@@ -77,7 +109,6 @@ export async function getUser(name) {
 
 export async function addToken(token, name) {
   return new Promise((resolve, reject) => {
-    console.log("je suis le token dans la database:", token)
     db.run(`UPDATE users SET token = ? WHERE name = ?`, [token, name], function (err) {
       if (err) {
         return reject(err);

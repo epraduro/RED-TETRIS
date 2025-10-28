@@ -45,19 +45,3 @@ export const piecesColors = {
   S: "green",
   Z: "red",
 };
-
-class Test {
-  name;
-
-  constructor(name) {
-    this.name = name;
-  }
-
-  toto() {
-    console.log(`je suis toto ${this.name}`);
-  }
-}
-
-const t = new Test("andrew");
-
-t.toto();
