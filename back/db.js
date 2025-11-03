@@ -46,6 +46,25 @@ export async function updateGame(query, player_name, status, id) {
   })
 }
 
+export async function delGame(id, player_name) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM games WHERE id = ?`, [id], function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        db.get("SELECT * FROM users WHERE id = ? ", [player_name], (err, row) => {
+          if (err) {
+            reject(err)
+          } else {
+            console.log(row)
+            resolve(row)
+          }
+        })
+      }
+    });
+  })
+}
+
 export async function createGame(player1, name) {
   return new Promise((resolve, reject) => {
     db.run(`INSERT INTO games (name, player1, owner, status) VALUES (?, ?, ?, ?)`, [name, player1, player1, 'waiting'], function (err) {

@@ -7,7 +7,7 @@ function Game() {
 
   useEffect(() => {
     if (!gameName || socket) return;
-    const newSocket = new WebSocket(`ws://localhost:4000/games/${gameName}`);
+    const newSocket = new WebSocket(`ws://localhost:4000/games/${gameName}/${playerName}`);
     
     newSocket.onopen = () => {
         newSocket.send(JSON.stringify({ type: 'join', player: playerName }));
