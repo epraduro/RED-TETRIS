@@ -1,15 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { showToast } from '../Toasts';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState('');
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const tempToken = localStorage.getItem("token");
+
+    if (tempToken !== null) {
+      navigate("/home");
+    }
+  }, [])
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -22,10 +31,10 @@ const Login = () => {
     if (response.data.error) {
       showToast("error", response.data.error)
     } else {
+      localStorage.setItem('token', response.data.token);
       showToast("success", response.data.message)
       navigate("/home");
     }
-    console.log(response.data.user);
   };
 
   return (

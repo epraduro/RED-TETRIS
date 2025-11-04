@@ -1,8 +1,8 @@
-import { addUser, getUser, getGame, createGame, updateGame, addToken, delGame } from './db.js'
-import express  from 'express';
-import cors from 'cors'
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import { addUser, getUser, getGame, createGame, updateGame, addToken, delGame, deleteToken, verifyToken } from "./db.js";
+import express from "express";
+import cors from "cors";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import http from 'http';
 import { WebSocketServer } from 'ws';
 
@@ -11,40 +11,48 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 const games = new Map();
 
-import { pieces, piecesColors } from './Pieces.js';
+import { pieces, piecesColors } from "./Pieces.js";
+import { addPlayer, removePlayer } from "./game/PlayerManagment.js";
 
 // Middleware
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-const JWT_SECRET = '71dac283b6f89a9e6251c597c3f5e3c0';
+const JWT_SECRET = "71dac283b6f89a9e6251c597c3f5e3c0";
 
 // Middleware pour vérifier le token
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  if (!token) return res.status(401).json({ error: 'Required Token' , redirect: '/login'});
-  
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token)
+    return res
+      .status(401)
+      .json({ error: "Required Token", redirect: "/login" });
+
   jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ error: 'Incorrect Token'});
-      req.user = user;
-      next();
+    if (err) return res.status(403).json({ error: "Incorrect Token" });
+    req.user = user;
+    next();
   });
 };
 
-app.get('/api/pieces', (req, res) => {
+app.get("/api/pieces", (req, res) => {
   res.json({ pieces, piecesColors });
 });
 
-app.post('/api/register', async (req, res) => {
+app.post("/api/register", async (req, res) => {
   const { name, password } = req.body;
 
   if (!name || name.length < 2) {
-    return res.status(200).json({ error: 'The name must be at least 2 characters long.' });
+    return res
+      .status(200)
+      .json({ error: "The name must be at least 2 characters long." });
   }
   if (!password || password.length < 6) {
-    return res.status(200).json({ error: 'The password must contain at least 6 characters.' });
+    return res
+      .status(200)
+      .json({ error: "The password must contain at least 6 characters." });
   }
 
   try {
@@ -53,54 +61,82 @@ app.post('/api/register', async (req, res) => {
 
     // Ajouter l'utilisateur
     const user = await addUser(name, hashedPassword);
-    
+
     // Générer le token JWT
-    const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, {
+      expiresIn: "1h",
+    });
 
     // Mettre à jour le token dans la base
     await addToken(token, user.name);
 
     // Renvoyer le token et une indication pour le frontend
     res.status(201).json({
-        message: 'Utilisateur enregistré avec succès',
-        user: { id: user.id, name: user.name },
-        token,
-        redirect: '/home' // Pour React Router
+      message: "Utilisateur enregistré avec succès",
+      user: { id: user.id, name: user.name },
+      token,
+      redirect: "/home", // Pour React Router
     });
   } catch (error) {
-      if (error.message.includes('UNIQUE constraint failed')) {
-          return res.status(400).json({ error: 'Ce nom est déjà utilisé.' });
-      }
-      console.error('Erreur serveur:', error);
-      res.status(500).json({ error: 'Erreur serveur lors de l\'enregistrement.' });
+    if (error.message.includes("UNIQUE constraint failed")) {
+      return res.status(400).json({ error: "Ce nom est déjà utilisé." });
+    }
+    console.error("Erreur serveur:", error);
+    res.status(500).json({ error: "Erreur serveur lors de l'enregistrement." });
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { name, password } = req.body;
 
   if (!name || name.length < 2) {
-    return res.status(200).json({ error: 'The name must be at least 2 characters long.' });
+    return res
+      .status(200)
+      .json({ error: "The name must be at least 2 characters long." });
   }
   if (!password || password.length < 6) {
-    return res.status(200).json({ error: 'The password must contain at least 6 characters.' });
+    return res
+      .status(200)
+      .json({ error: "The password must contain at least 6 characters." });
   }
 
   const user = await getUser(name);
   if (user) {
     const validPassword = bcrypt.compareSync(password, user.password);
-    // console.log(validPassword);
-    if (validPassword === false || validPassword === undefined) return res.status(200).json({ error: "Incorrect password"});
-    // res.json({ message: 'Connexion réussie', redirect: '/home' });
-    if (validPassword === true) return res.json({ message: 'The player is successfully connected', redirect: '/home' });
+
+    if (validPassword === false || validPassword === undefined)
+      return res.status(200).json({ error: "Incorrect password" });
+    if (validPassword === true) {
+      if (user.token === null)
+      {
+        const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, {
+          expiresIn: "1h",
+        });
+
+        await addToken(token, user.name);
+
+        return res.status(201).json({
+          message: "The player is successfully connected2",
+          user: { id: user.id, name: user.name},
+          token
+        });
+      } else {
+        await verifyToken(user, JWT_SECRET);
+        const updateUser = await getUser(name);
+        return res.status(201).json({
+            message: "The player is successfully connected",
+            updateUser: { id: updateUser.id, name: updateUser.name},
+            token: updateUser.token
+          });
+      }
+    }
   } else {
-    return res.json({ error: 'An error has uncurred' });
+    return res.json({ error: "An error has uncurred" });
   }
 });
 
-// Route protégée pour la page d'accueil
-app.get('/api/home', authenticateToken, (req, res) => {
-  res.json({ message: 'Welcome to the home page', user: req.user });
+app.get("/api/home", authenticateToken, (req, res) => {
+  res.json({ message: "Welcome to the home page", user: req.user });
 });
 
 app.post('/games/:room/:player_name', async (req, res) => {
@@ -115,32 +151,19 @@ app.post('/games/:room/:player_name', async (req, res) => {
         if (!game) {
           game = await createGame(player_name, room);
           console.log(`New game created : ID ${game.name}`);
-        } else {
-            if (game.player1 === player.name) {
-                return res.status(400).json({ error: 'Vous êtes déjà player1 dans cette partie' });
-            }
-            if (game.player2) {
-                return res.status(409).json({ error: 'La partie est pleine' });
-            }
-            game.player2 = player.name;
-            game.status = 'active';
-            game = await updateQueryGame("player2", player.name, 'active', game.id);
-            console.log(`Joueur ${player_name} rejoint la partie ${game.id} comme player2`);
-            if (!games.has(game.id)) {
-              games.set(game.id, new Set());
-            }
+          if (game.id)
+            games.set(game.id, new Set());
         }
-
         res.status(201).json({ ...game.room, player_name });
     } catch (error) {
         res.status(500).json({ error: `Erreur serveur : ${error.message}` });
     }
 });
 
-const updateQueryGame = async (column, player_name, status, id) => 
+const updateQueryGame = async (column, value, id) => 
 {
-  const query = `UPDATE games SET ${column} = ?, status = ? WHERE id = ?`;
-  const game = updateGame(query, player_name, status, id);
+  const query = `UPDATE games SET ${column} = ? WHERE id = ?`;
+  const game = await updateGame(query, value, id);
   return game;
 }
 
@@ -153,6 +176,7 @@ server.on('upgrade', async (request, socket, head) => {
   const host = request.headers['host'] || 'localhost:4000';
   const url = new URL(request.url, `http://${host}`);
   const parts = url.pathname.split('/');
+  let players = [];
 
   if (parts.length !== 4 || parts[1] !== 'games')
   {
@@ -171,82 +195,100 @@ server.on('upgrade', async (request, socket, head) => {
   }
 
   const game = await getGameValue(gameName);
-  if (!game || (playerName !== game.player1 && playerName !== game.player2)) 
+  if (!game) 
   {
-    console.log('Joueur non autorisé ou partie inexistante');
+    console.log('Partie inexistante');
     socket.destroy();
     return;
   }
   
-  const id = game.id;
-  if (!id)
+  if (!game.id)
   {
     console.log("Error with the id!");
     socket.destroy();
     return; 
   }
-  if (!games.has(id)) 
-  {
-    games.set(id, new Set());
-  }
   wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit('connection', ws, request, gameName, game, playerName);
+    wss.emit('connection', ws, request, players, game, playerName);
   });
 });
 
-wss.on('connection', (ws, request, gameName, game, playerName) => {
-  const gameClients = games.get(game.id);
-  gameClients.add(ws);
-  console.log(`Client connecté au jeu: ${gameName}. Total: ${gameClients.size}`);
+wss.on('connection', (ws, request, players, game, playerName) => {
+  // const gameClients = games.get(game.id);
+  players = games.get(game.id);
+  players = addPlayer(players, playerName, ws);
+  games.set(game.id, players);
 
-  ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !' }));
+  // gameClients.add(ws);
+  console.log(`Client connecté au jeu: ${game.name}. Total: ${players.length}`);
+  console.log(games);
+  ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
 
-  ws.on('message', (data) => {
-    const message = JSON.parse(data);
+  ws.on('message', async (data) => {
+    const msg = JSON.parse(data);
 
-    gameClients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          ...message,
-          from: 'someone', //a changer pour chaque id de joueur.
-        }));
-      }
-    });
+    if (msg.type === 'startGame')
+    {
+      await updateQueryGame('status', 'started', game.id);
+      broadCastToGame(game.id, 'started', 'game has started');
+    }
+
+  });
+
+  ws.on('close', async () => {
+    game = await getGame(game.name);
+    console.log('CLOSE DÉCLENCHÉ !');
+
+    players = games.get(game.id);
+    players = removePlayer(players, playerName);
+    games.set(game.id, players);
+    players = games.get(game.id);
+    console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${players.length}`);
+
+  
+    if (players.length > 0 && players[0]) {
+      game = await updateQueryGame('owner', players[0].name, game.id);
+    }
+
+    if (players.length === 0) {
+      await delGame(game.id, playerName);
+      games.delete(game.id);
+      console.log(`Jeu ${game.name} supprimé (vide)`);
+    }
+
+    // if (game.owner === playerName && game.player1 === playerName && game.player2 ){
+    //   game = await updateQueryGame("owner", game.player2, 'waiting', game.id);
+    // }
+    // else if (game.owner == playerName && game.player2 == playerName && game.player1) {
+    //   game = await updateQueryGame("owner", game.player1, 'waiting', game.id);
+    // }
+  
+    // if (playerName === game.player1)
+    //   game = await updateQueryGame("player1", null, 'waiting', game.id);
+    // else if (playerName === game.player2)
+    //   game = await updateQueryGame("player2", null, 'waiting', game.id);
+  
+    // if (!game.player1 && !game.player2) 
+    // {
+    //   delGame(game.id, playerName);
+    //   games.delete(game.id);
+    //   console.log(`Jeu ${gameName} supprimé (vide)`);
+    // } 
   });
 
   // Déconnexion
-  ws.on('close', async () => {
-    console.log('CLOSE DÉCLENCHÉ !');
-    gameClients.delete(ws);
-    console.log(`Client déconnecté du jeu: ${gameName}. Restants: ${gameClients.size}`);
-    let query;
+});
 
-    if (playerName === game.player1)
-      game = await updateQueryGame("player1", null, 'waiting', game.id);
-    else if (playerName === game.player2)
-      game = await updateQueryGame("player2", null, 'waiting', game.id);
-    console.log(game);
+export const broadCastToGame = (id, type, message) =>{
+  const game = games.get(id);
+  if (!game) return;
 
-
-    if (gameClients.size === 0) 
-    {
-      delGame(game.id, playerName);
-      games.delete(game.id);
-      console.log(`Jeu ${gameName} supprimé (vide)`);
-    }
-
-    if (game.owner == playerName && game.player1 == playerName && game.player2)
-    {
-      game = await updateQueryGame("owner", game.player2, 'waiting', game.id);
-      console.log(updatedGame);
-    }
-    else if (game.owner == playerName && game.player2 == playerName && game.player1)
-    {
-      updatedGame = await updateGame(query, game.player1, 'waiting', game.id);
-      console.log(updatedGame);
+  game.forEach(player => {
+    if (player.ws.readyState === WebSocket.OPEN) {
+      player.ws.send(JSON.stringify({type: `${type}`, message: `${message}`}));
     }
   });
-});
+}
 
 const PORT = 4000;
 server.listen(PORT, () => {

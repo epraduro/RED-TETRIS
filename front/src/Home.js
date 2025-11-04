@@ -35,13 +35,13 @@ function Home() {
                     'Authorization': `Bearer ${token}`,
                 },
             });
-            setPlayerName(response.data.user.name); // Supposant que user.name est renvoyé
+            setPlayerName(response.data.user.name);
             showToast('success', 'Connexion réussie !');
-            console.log('Réponse /api/home:', response.data);
         } catch (error) {
             if (error.response) {
                 showToast('error', error.response.data.error || 'Erreur lors de la connexion22');
                 if (error.response.status === 401 || error.response.status === 403) {
+                    localStorage.removeItem("token");
                     navigate('/login');
                 }
             } else {

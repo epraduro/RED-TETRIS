@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3';
+import jwt from "jsonwebtoken";
 
 // Créer ou ouvrir une base de données (fichier 'mabdd.db')
 export const db = new sqlite3.Database('./database.db', (err) => {
@@ -20,16 +21,14 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    player1 TEXT,
     owner TEXT NOT NULL,
-    status TEXT,
-    player2 TEXT
+    status TEXT
   )`);
 });
 
-export async function updateGame(query, player_name, status, id) {
+export async function updateGame(query, value, id) {
   return new Promise((resolve, reject) => {
-    db.run(query,[player_name, status, id], function (err){
+    db.run(query,[value, id], function (err){
       if (err) {
         reject(err)
       } else {
@@ -37,7 +36,7 @@ export async function updateGame(query, player_name, status, id) {
           if (err) {
             reject(err)
           } else {
-            console.log(row)
+            //console.log(row)
             resolve(row)
           }
         })
@@ -56,7 +55,7 @@ export async function delGame(id, player_name) {
           if (err) {
             reject(err)
           } else {
-            console.log(row)
+            //console.log(row)
             resolve(row)
           }
         })
@@ -67,7 +66,7 @@ export async function delGame(id, player_name) {
 
 export async function createGame(player1, name) {
   return new Promise((resolve, reject) => {
-    db.run(`INSERT INTO games (name, player1, owner, status) VALUES (?, ?, ?, ?)`, [name, player1, player1, 'waiting'], function (err) {
+    db.run(`INSERT INTO games (name, owner, status) VALUES (?, ?, ?)`, [name, player1, 'waiting'], function (err) {
       if (err) {
         reject(err)
       } else {
@@ -75,7 +74,7 @@ export async function createGame(player1, name) {
           if (err) {
             reject(err)
           } else {
-            console.log(row)
+            //console.log(row)
             resolve(row)
           }
         })
@@ -105,7 +104,38 @@ export async function addUser(name, password) {
 
 export async function getUser(name) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT id, name, password FROM users WHERE name=?`, [name], (err, row) => {
+    db.get(`SELECT id, name, password, token FROM users WHERE name=?`, [name], (err, row) => {
+      if (err) {
+        resolve(null)
+      } else {
+        resolve(row)
+      }
+    });
+  })
+}
+
+export async function verifyToken(user, secret) {
+  return new Promise((resolve, reject) => {
+    jwt.verify(user.token, secret, async (err, decoded) => {
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          await deleteToken(user.name)
+          
+          const token = jwt.sign({ name: user.name, id: user.id }, secret, {
+            expiresIn: "1h",
+          });
+
+          await addToken(token, user.name);
+        }
+      }
+      resolve()
+    })
+  });
+}
+
+export async function deleteToken(name) {
+  return new Promise((resolve, reject) => {
+    db.get(`DELETE token FROM users WHERE name=?`, [name], (err, row) => {
       if (err) {
         resolve(null)
       } else {
@@ -117,7 +147,6 @@ export async function getUser(name) {
 
 export async function addToken(token, name) {
   return new Promise((resolve, reject) => {
-    console.log("je suis le token dans la database:", token)
     db.run(`UPDATE users SET token = ? WHERE name = ?`, [token, name], function (err) {
       if (err) {
         return reject(err);
@@ -136,7 +165,7 @@ export function closeDatabase() {
 
 export async function getGame(name) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT id, name, player1, player2, owner, status FROM games WHERE name=?`, [name], (err, row) => {
+    db.get(`SELECT * FROM games WHERE name=?`, [name], (err, row) => {
       if (err) {
         resolve(null)
       } else {
