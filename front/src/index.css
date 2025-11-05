@@ -36,9 +36,33 @@ code {
 }
 
 .I {
-  background-color: blue;
+  background-color: cyan;
 }
 
 .L {
   background-color: orange;
+}
+
+.S {
+  background-color: green;
+}
+
+.Z {
+  background-color: red;
+}
+
+.T {
+  background-color: purple;
+}
+
+.J {
+  background-color: pink;
+}
+
+.O {
+  background-color: yellow;
+}
+
+.C {
+  background-color: chartreuse;
 }
