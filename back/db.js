@@ -21,16 +21,14 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    player1 TEXT,
     owner TEXT NOT NULL,
-    status TEXT,
-    player2 TEXT
+    status TEXT
   )`);
 });
 
-export async function updateGame(query, player_name, status, id) {
+export async function updateGame(query, value, id) {
   return new Promise((resolve, reject) => {
-    db.run(query,[player_name, status, id], function (err){
+    db.run(query,[value, id], function (err){
       if (err) {
         reject(err)
       } else {
@@ -38,7 +36,26 @@ export async function updateGame(query, player_name, status, id) {
           if (err) {
             reject(err)
           } else {
-            console.log(row)
+            //console.log(row)
+            resolve(row)
+          }
+        })
+      }
+    });
+  })
+}
+
+export async function delGame(id, player_name) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM games WHERE id = ?`, [id], function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        db.get("SELECT * FROM users WHERE id = ? ", [player_name], (err, row) => {
+          if (err) {
+            reject(err)
+          } else {
+            //console.log(row)
             resolve(row)
           }
         })
@@ -49,7 +66,7 @@ export async function updateGame(query, player_name, status, id) {
 
 export async function createGame(player1, name) {
   return new Promise((resolve, reject) => {
-    db.run(`INSERT INTO games (name, player1, owner, status) VALUES (?, ?, ?, ?)`, [name, player1, player1, 'waiting'], function (err) {
+    db.run(`INSERT INTO games (name, owner, status) VALUES (?, ?, ?)`, [name, player1, 'waiting'], function (err) {
       if (err) {
         reject(err)
       } else {
@@ -57,7 +74,7 @@ export async function createGame(player1, name) {
           if (err) {
             reject(err)
           } else {
-            console.log(row)
+            //console.log(row)
             resolve(row)
           }
         })
@@ -148,7 +165,7 @@ export function closeDatabase() {
 
 export async function getGame(name) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT id, name, player1, player2, owner, status FROM games WHERE name=?`, [name], (err, row) => {
+    db.get(`SELECT * FROM games WHERE name=?`, [name], (err, row) => {
       if (err) {
         resolve(null)
       } else {

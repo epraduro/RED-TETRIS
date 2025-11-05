@@ -1,4 +1,4 @@
-import { addUser, getUser, getGame, createGame, updateGame, addToken, deleteToken, verifyToken } from "./db.js";
+import { addUser, getUser, getGame, createGame, updateGame, addToken, delGame, deleteToken, verifyToken } from "./db.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -12,6 +12,7 @@ const wss = new WebSocketServer({ noServer: true });
 const games = new Map();
 
 import { pieces, piecesColors } from "./Pieces.js";
+import { addPlayer, removePlayer } from "./game/PlayerManagment.js";
 
 // Middleware
 app.use(cors({ origin: "*" }));
@@ -148,92 +149,146 @@ app.post('/games/:room/:player_name', async (req, res) => {
         
         let game = await getGame(room);
         if (!game) {
-          // Créer une nouvelle partie avec player1
           game = await createGame(player_name, room);
           console.log(`New game created : ID ${game.name}`);
-        } else {
-            // Rejoindre comme player2 si disponible
-            if (game.player1 === player.name) {
-                return res.status(400).json({ error: 'Vous êtes déjà player1 dans cette partie' });
-            }
-            if (game.player2) {
-                return res.status(409).json({ error: 'La partie est pleine' });
-            }
-            game.player2 = player.name;
-            game.status = 'active';
-            const query = updateQueryGame("player2");
-            game = await updateGame(query, player.name, 'active', game.id);
-            console.log(`Joueur ${player_name} rejoint la partie ${game.id} comme player2`);
+          if (game.id)
+            games.set(game.id, new Set());
         }
-
-        res.status(201).json({ ...game.room, player_name }); // Retourne game_id et player_name
+        res.status(201).json({ ...game.room, player_name });
     } catch (error) {
         res.status(500).json({ error: `Erreur serveur : ${error.message}` });
     }
 });
 
-const updateQueryGame = (column) => 
+const updateQueryGame = async (column, value, id) => 
 {
-  const query = `UPDATE games SET ${column} = ?, status = ? WHERE id = ?`;
-  return query;
+  const query = `UPDATE games SET ${column} = ? WHERE id = ?`;
+  const game = await updateGame(query, value, id);
+  return game;
 }
 
-server.on('upgrade', (request, socket, head) => {
+const getGameValue = async (gameName) => {
+  const game = await getGame(gameName);
+  return game
+}
+
+server.on('upgrade', async (request, socket, head) => {
   const host = request.headers['host'] || 'localhost:4000';
   const url = new URL(request.url, `http://${host}`);
-  const gameName = url.pathname.split('/games/')[1];
+  const parts = url.pathname.split('/');
+  let players = [];
 
-  if (!gameName || !url.pathname.startsWith('/games/')) {
+  if (parts.length !== 4 || parts[1] !== 'games')
+  {
+    console.log('URL invalide:', url.pathname);
     socket.destroy();
     return;
   }
 
-  if (!games.has(gameName)) {
-    games.set(gameName, new Set());
+  const gameName = parts[2];
+  const playerName = parts[3];
+  
+  if (!gameName || !url.pathname.startsWith('/games/')) 
+  {
+    socket.destroy();
+    return;
   }
 
+  const game = await getGameValue(gameName);
+  if (!game) 
+  {
+    console.log('Partie inexistante');
+    socket.destroy();
+    return;
+  }
+  
+  if (!game.id)
+  {
+    console.log("Error with the id!");
+    socket.destroy();
+    return; 
+  }
   wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit('connection', ws, request, gameName);
+    wss.emit('connection', ws, request, players, game, playerName);
   });
 });
 
-wss.on('connection', (ws, request, gameName) => {
-  const gameClients = games.get(gameName);
+wss.on('connection', (ws, request, players, game, playerName) => {
+  // const gameClients = games.get(game.id);
+  players = games.get(game.id);
+  players = addPlayer(players, playerName, ws);
+  games.set(game.id, players);
 
-  // Ajouter le client au jeu
-  gameClients.add(ws);
-  console.log(`Client connecté au jeu: ${gameName}. Total: ${gameClients.size}`);
+  // gameClients.add(ws);
+  console.log(`Client connecté au jeu: ${game.name}. Total: ${players.length}`);
+  console.log(games);
+  ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
 
-  // Message de bienvenue
-  ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !' }));
+  ws.on('message', async (data) => {
+    const msg = JSON.parse(data);
 
-  // Réception de messages
-  ws.on('message', (data) => {
-    const message = JSON.parse(data);
+    if (msg.type === 'startGame')
+    {
+      await updateQueryGame('status', 'started', game.id);
+      broadCastToGame(game.id, 'started', 'game has started');
+    }
 
-    // Diffuser à tous les joueurs du même jeu
-    gameClients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({
-          ...message,
-          from: 'someone', // ou ajoute un ID joueur
-        }));
-      }
-    });
+  });
+
+  ws.on('close', async () => {
+    game = await getGame(game.name);
+    console.log('CLOSE DÉCLENCHÉ !');
+
+    players = games.get(game.id);
+    players = removePlayer(players, playerName);
+    games.set(game.id, players);
+    players = games.get(game.id);
+    console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${players.length}`);
+
+  
+    if (players.length > 0 && players[0]) {
+      game = await updateQueryGame('owner', players[0].name, game.id);
+    }
+
+    if (players.length === 0) {
+      await delGame(game.id, playerName);
+      games.delete(game.id);
+      console.log(`Jeu ${game.name} supprimé (vide)`);
+    }
+
+    // if (game.owner === playerName && game.player1 === playerName && game.player2 ){
+    //   game = await updateQueryGame("owner", game.player2, 'waiting', game.id);
+    // }
+    // else if (game.owner == playerName && game.player2 == playerName && game.player1) {
+    //   game = await updateQueryGame("owner", game.player1, 'waiting', game.id);
+    // }
+  
+    // if (playerName === game.player1)
+    //   game = await updateQueryGame("player1", null, 'waiting', game.id);
+    // else if (playerName === game.player2)
+    //   game = await updateQueryGame("player2", null, 'waiting', game.id);
+  
+    // if (!game.player1 && !game.player2) 
+    // {
+    //   delGame(game.id, playerName);
+    //   games.delete(game.id);
+    //   console.log(`Jeu ${gameName} supprimé (vide)`);
+    // } 
   });
 
   // Déconnexion
-  ws.on('close', () => {
-    gameClients.delete(ws);
-    console.log(`Client déconnecté du jeu: ${gameName}. Restants: ${gameClients.size}`);
+});
 
-    // Optionnel : nettoyer le jeu s'il est vide
-    if (gameClients.size === 0) {
-      games.delete(gameName);
-      console.log(`Jeu ${gameName} supprimé (vide)`);
+export const broadCastToGame = (id, type, message) =>{
+  const game = games.get(id);
+  if (!game) return;
+
+  game.forEach(player => {
+    if (player.ws.readyState === WebSocket.OPEN) {
+      player.ws.send(JSON.stringify({type: `${type}`, message: `${message}`}));
     }
   });
-});
+}
 
 const PORT = 4000;
 server.listen(PORT, () => {

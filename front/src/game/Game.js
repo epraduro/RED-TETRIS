@@ -1,32 +1,66 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom'; // <- IMPORTANT
 
 function Game() {
   const { gameName, playerName } = useParams(); 
-  const [socket, setSocket] = useState(null);
+  const [gameStatus, setGameStatus] = useState('waiting');
+  const [gameOwner, setGameOwner] = useState("");
+  const wsRef = useRef(null);
 
   useEffect(() => {
-    if (!gameName || socket) return;
-    const newSocket = new WebSocket(`ws://localhost:4000/games/${gameName}`);
-    
-    newSocket.onopen = () => {
-        newSocket.send(JSON.stringify({ type: 'join', player: playerName }));
-    };
+    if (!gameName || !playerName) return;
 
-    newSocket.onmessage = (event) => {
-    };
+    if (!wsRef.current){
+      const newSocket = new WebSocket(`ws://localhost:4000/games/${gameName}/${playerName}`);
+      wsRef.current = newSocket;
 
-    newSocket.onclose = () => {
-    };
+      newSocket.onopen = () => {
+          newSocket.send(JSON.stringify({ type: 'join', player: playerName }));
+      };
 
-    setSocket(newSocket);
+      newSocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log(data);
+        if (data.type === 'connected')
+          setGameOwner(data.owner);
+        else if (data.type === 'started') {
+          setGameStatus('started');
+          console.log('Partie commencée !');
+        }
+      };
+
+      newSocket.onclose = () => {
+      };
+    }
 
     return () => {
-    //   newSocket.close();
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [gameName, socket]);
+  }, [gameName, playerName]);
 
-  return <div>Jeu: {gameName}</div>;
+  const startGame = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'startGame' }));
+    }
+  };
+
+  return (
+    <>
+      <div>Jeu: {gameName}, player: {playerName}</div>
+
+
+      {gameOwner === playerName && gameStatus === 'waiting' && (
+        <button onClick={startGame}>Démarrer la partie</button>
+      )}
+
+      {gameStatus === 'started' && (
+        <p style={{ color: 'green' }}>La partie est en cours !</p>
+      )}
+    </>
+);
 }
 
 export default Game;
