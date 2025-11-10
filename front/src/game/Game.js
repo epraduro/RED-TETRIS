@@ -45,6 +45,14 @@ function Game() {
             setMessage(data.message);
             console.log('Partie commencée !');
           }
+          else if (data.type === 'error'){
+            setMessage(data.message);
+            showToast("error", data.message);
+            navigate('/home')
+          }
+          else if (data.type === 'owner'){
+            setGameOwner(data.message);
+          }
         };
   
         newSocket.onclose = () => {
@@ -58,7 +66,7 @@ function Game() {
         wsRef.current = null;
       }
     };
-  }, [gameName, playerName]);
+  }, [gameName, playerName, gameOwner]);
 
   const startGame = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {

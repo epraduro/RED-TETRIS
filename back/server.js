@@ -227,12 +227,23 @@ server.on('upgrade', async (request, socket, head) => {
 });
 
 wss.on('connection', (ws, request, players, game, playerName) => {
+  const status = game.status;
+  if (status === 'started'){
+    ws.send(JSON.stringify({ type: 'error', message: 'Game has already started!' }));
+    ws.close(1008);
+    return;
+  }
   players = games.get(game.id);
+  const existing = [...players].find(p => p.name === playerName);
+  if (existing) {
+    ws.send(JSON.stringify({ type: 'error', message: 'Player already connected to this game!' }));
+    ws.close(1008);
+    return;
+  }
   players = addPlayer(players, playerName, ws);
   games.set(game.id, players);
 
   console.log(`Client connecté au jeu: ${game.name}. Total: ${players.length}`);
-  console.log(games);
   ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
 
   ws.on('message', async (data) => {
@@ -259,6 +270,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   
     if (players.length > 0 && players[0]) {
       game = await updateQueryGame('owner', players[0].name, game.id);
+      broadCastToGame(game.id, 'owner', `${game.owner}`);
     }
 
     if (players.length === 0) {
