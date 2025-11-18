@@ -1,18 +1,21 @@
-import { addUser, getUser, getGame, createGame, updateGame, addToken, delGame, deleteToken, verifyToken } from "./db.js";
+import { addUser, getUser, addToken, deleteToken, verifyToken } from "./db.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import http from 'http';
 import { WebSocketServer } from 'ws';
+import { Player } from './Player.js';
+import { Game } from "./Game.js";
+import { games, getGameValue } from "./game/GameManagment.js";
 
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
-const games = new Map();
+// const games = new Map();
 
 // import { pieces, piecesColors } from "./Pieces.js";
-import { addPlayer, removePlayer } from "./game/PlayerManagment.js";
+import { removePlayer } from "./game/PlayerManagment.js";
 
 // Middleware
 app.use(cors({ origin: "*" }));
@@ -147,12 +150,12 @@ app.post('/games/:room/:player_name', async (req, res) => {
         let player = await getUser(player_name);
         if (!player) { return res.status(400).json({ error: 'Player not found!' });}
         
-        let game = await getGame(room);
+        let game = getGameValue(room);
         if (!game) {
-          game = await createGame(player_name, room);
-          console.log(`New game created : ID ${game.name}`);
+          const id = games.size > 0 ? Math.max(...[...games].map(g => g.id)) + 1 : 1;
+          game = new Game(id, room, player_name, 'waiting');
           if (game.id)
-            games.set(game.id, new Set());
+            games.add(game);
         }
         res.status(201).json({ ...game.room, player_name });
     } catch (error) {
@@ -160,17 +163,6 @@ app.post('/games/:room/:player_name', async (req, res) => {
     }
 });
 
-const updateQueryGame = async (column, value, id) => 
-{
-  const query = `UPDATE games SET ${column} = ? WHERE id = ?`;
-  const game = await updateGame(query, value, id);
-  return game;
-}
-
-const getGameValue = async (gameName) => {
-  const game = await getGame(gameName);
-  return game
-}
 
 server.on('upgrade', async (request, socket, head) => {
   const host = request.headers['host'] || 'localhost:4000';
@@ -193,8 +185,7 @@ server.on('upgrade', async (request, socket, head) => {
     socket.destroy();
     return;
   }
-
-  const game = await getGameValue(gameName);
+  const game = getGameValue(gameName);
   if (!game) 
   {
     console.log('Partie inexistante');
@@ -233,17 +224,17 @@ wss.on('connection', (ws, request, players, game, playerName) => {
     ws.close(1008);
     return;
   }
-  players = games.get(game.id);
+  players = game.players;
   const existing = [...players].find(p => p.name === playerName);
   if (existing) {
     ws.send(JSON.stringify({ type: 'error', message: 'Player already connected to this game!' }));
     ws.close(1008);
     return;
   }
-  players = addPlayer(players, playerName, ws);
-  games.set(game.id, players);
+  let player = new Player(playerName, ws);
+  game.players.push(player);
 
-  console.log(`Client connecté au jeu: ${game.name}. Total: ${players.length}`);
+  console.log(`Client connecté au jeu: ${game.name}. Total: ${game.players.length}`);
   ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
 
   ws.on('message', async (data) => {
@@ -251,41 +242,36 @@ wss.on('connection', (ws, request, players, game, playerName) => {
 
     if (msg.type === 'startGame')
     {
-      await updateQueryGame('status', 'started', game.id);
-      broadCastToGame(game.id, 'started', 'game has started');
+      game.status = (started);
+      broadCastToGame(game, 'started', 'game has started');
     }
 
   });
 
-  ws.on('close', async () => {
-    game = await getGame(game.name);
+  ws.on('close', () => {
+    game = getGameValue(game.name);
     console.log('CLOSE DÉCLENCHÉ !');
 
-    players = games.get(game.id);
-    players = removePlayer(players, playerName);
-    games.set(game.id, players);
-    players = games.get(game.id);
-    console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${players.length}`);
+    game.players = removePlayer(players, playerName);
+    console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${game.players.length}`);
 
   
-    if (players.length > 0 && players[0]) {
-      game = await updateQueryGame('owner', players[0].name, game.id);
-      broadCastToGame(game.id, 'owner', `${game.owner}`);
+    if (game.players.length > 0 && game.players[0]) {
+      game.owner = game.players[0].name;
+      broadCastToGame(game, 'owner', `${game.owner}`);
     }
 
-    if (players.length === 0) {
-      await delGame(game.id, playerName);
-      games.delete(game.id);
+    if (game.players.length === 0) {
+      games.delete(game);
       console.log(`Jeu ${game.name} supprimé (vide)`);
     }
   });
 });
 
-export const broadCastToGame = (id, type, message) =>{
-  const game = games.get(id);
+export const broadCastToGame = (game, type, message) =>{
   if (!game) return;
 
-  game.forEach(player => {
+  game.players.forEach(player => {
     if (player.ws.readyState === WebSocket.OPEN) {
       player.ws.send(JSON.stringify({type: `${type}`, message: `${message}`}));
     }

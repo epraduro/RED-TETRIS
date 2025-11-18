@@ -67,7 +67,7 @@ function Game() {
         wsRef.current = null;
       }
     };
-  }, [gameName, playerName, gameOwner]);
+  }, []);
 
   const startGame = () => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -86,8 +86,8 @@ function Game() {
       )}
 
       {gameStatus === 'started' && (
-        <Grid/>
-        // <p style={{ color: 'green' }}>La partie est en cours !</p>
+        // <Grid/>
+        <p style={{ color: 'green' }}>La partie est en cours !</p>
       )}
     </div>
     </>

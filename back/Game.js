@@ -1,7 +1,8 @@
-class Game {
-	constructor(name, players, owner, status) {
+export class Game {
+	constructor(id, name, players, owner, status) {
+		this.id = id;
 		this.name = name;
-		this.players = players;
+		this.players = [];
 		this.owner = owner;
 		this.status = status;
 	}
