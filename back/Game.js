@@ -1,8 +1,12 @@
 class Game {
-	constructor(name, players) {
+	constructor(name, players, owner, status) {
 		this.name = name;
 		this.players = players;
+		this.owner = owner;
+		this.status = status;
 	}
+
+	
 
 	update () {
 		if (start && this.currentPiece.shape !== null) {
