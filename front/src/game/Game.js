@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom'; // <- IMPORTANT
+import Grid from "./Grid";
 
 function Game() {
   const { gameName, playerName } = useParams(); 
@@ -49,6 +50,7 @@ function Game() {
 
   return (
     <>
+    <div className='flex flex-center justify-center items-center flex-col w-full h-full bg-gray-500'>
       <div>Jeu: {gameName}, player: {playerName}</div>
 
 
@@ -57,8 +59,10 @@ function Game() {
       )}
 
       {gameStatus === 'started' && (
-        <p style={{ color: 'green' }}>La partie est en cours !</p>
+        <Grid/>
+        // <p style={{ color: 'green' }}>La partie est en cours !</p>
       )}
+    </div>
     </>
 );
 }

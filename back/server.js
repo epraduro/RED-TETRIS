@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 const games = new Map();
 
-import { pieces, piecesColors } from "./Pieces.js";
+// import { pieces, piecesColors } from "./Pieces.js";
 import { addPlayer, removePlayer } from "./game/PlayerManagment.js";
 
 // Middleware
@@ -37,9 +37,9 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-app.get("/api/pieces", (req, res) => {
-  res.json({ pieces, piecesColors });
-});
+// app.get("/api/pieces", (req, res) => {
+//   res.json({ pieces, piecesColors });
+// });
 
 app.post("/api/register", async (req, res) => {
   const { name, password } = req.body;
