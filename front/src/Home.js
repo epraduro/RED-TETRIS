@@ -11,14 +11,7 @@ function Home() {
 	const navigate = useNavigate();
 
 	const createGame = async () => {
-		try {
-			const reponse = await axios.post(`http://localhost:4000/games/${gameName}/${playerName}`);
-			if (reponse.status == 201)
-				navigate(`/games/${gameName}/${playerName}`);
-		}
-		catch {
-			showToast('error', 'An error has occured!');
-		}
+		navigate(`/games/${gameName}/${playerName}`);
 	}
 
 	const connectUser = async () => {

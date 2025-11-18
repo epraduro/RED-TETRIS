@@ -208,20 +208,42 @@ server.on('upgrade', async (request, socket, head) => {
     socket.destroy();
     return; 
   }
+
+  // players = games.get(game.id) || [];
+  // const existingPlayer = players.find(p => p.name === playerName);
+  // if (existingPlayer) {
+  //   ws.send(JSON.stringify({
+  //     type: 'error',
+  //     message: 'Already connected to the game!'
+  //   }));
+  //   ws.close(1008, 'Already connected');
+  //   console.log(`Connexion refusée: ${playerName} déjà dans la partie`);
+  //   return;
+  // }
+
   wss.handleUpgrade(request, socket, head, (ws) => {
     wss.emit('connection', ws, request, players, game, playerName);
   });
 });
 
 wss.on('connection', (ws, request, players, game, playerName) => {
-  // const gameClients = games.get(game.id);
+  const status = game.status;
+  if (status === 'started'){
+    ws.send(JSON.stringify({ type: 'error', message: 'Game has already started!' }));
+    ws.close(1008);
+    return;
+  }
   players = games.get(game.id);
+  const existing = [...players].find(p => p.name === playerName);
+  if (existing) {
+    ws.send(JSON.stringify({ type: 'error', message: 'Player already connected to this game!' }));
+    ws.close(1008);
+    return;
+  }
   players = addPlayer(players, playerName, ws);
   games.set(game.id, players);
 
-  // gameClients.add(ws);
   console.log(`Client connecté au jeu: ${game.name}. Total: ${players.length}`);
-  console.log(games);
   ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
 
   ws.on('message', async (data) => {
@@ -248,6 +270,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   
     if (players.length > 0 && players[0]) {
       game = await updateQueryGame('owner', players[0].name, game.id);
+      broadCastToGame(game.id, 'owner', `${game.owner}`);
     }
 
     if (players.length === 0) {
@@ -255,28 +278,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
       games.delete(game.id);
       console.log(`Jeu ${game.name} supprimé (vide)`);
     }
-
-    // if (game.owner === playerName && game.player1 === playerName && game.player2 ){
-    //   game = await updateQueryGame("owner", game.player2, 'waiting', game.id);
-    // }
-    // else if (game.owner == playerName && game.player2 == playerName && game.player1) {
-    //   game = await updateQueryGame("owner", game.player1, 'waiting', game.id);
-    // }
-  
-    // if (playerName === game.player1)
-    //   game = await updateQueryGame("player1", null, 'waiting', game.id);
-    // else if (playerName === game.player2)
-    //   game = await updateQueryGame("player2", null, 'waiting', game.id);
-  
-    // if (!game.player1 && !game.player2) 
-    // {
-    //   delGame(game.id, playerName);
-    //   games.delete(game.id);
-    //   console.log(`Jeu ${gameName} supprimé (vide)`);
-    // } 
   });
-
-  // Déconnexion
 });
 
 export const broadCastToGame = (id, type, message) =>{
