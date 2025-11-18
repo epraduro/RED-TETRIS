@@ -11,7 +11,7 @@ export const removePlayer = (players, playerName) => {
   };
 
   export const addPlayer = (players, playerName, ws) => {
-    const player = { name: playerName, ws: ws };
+    const player = new Player(playerName, ws);
     console.log(`${playerName} ajouté. Total: ${players.length + 1}`);
   
     return [...players, player];
