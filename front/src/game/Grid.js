@@ -228,20 +228,23 @@ function Grid() {
     }
   }
 
-  useEffect(() => {
-    document.addEventListener("keydown", keydown)
-    draw();
-    const iter = setInterval(() => {
-      update();
-    }, REFRESH);
-    return () => {
-      clearInterval(iter);
-      document.removeEventListener("keydown", keydown);
-    }
-  }, [currentPiece, start, playerBag]);
+  // useEffect(() => {
+  //   document.addEventListener("keydown", keydown)
+  //   draw();
+  //   const iter = setInterval(() => {
+  //     update();
+  //   }, REFRESH);
+  //   return () => {
+  //     clearInterval(iter);
+  //     document.removeEventListener("keydown", keydown);
+  //   }
+  // }, [currentPiece, start, playerBag]);
 
   useEffect(() => {
-    if (!currentPiece) newPiece();
+    document.addEventListener("keydown", keydown)
+    return () => {
+      document.removeEventListener("keydown", keydown);
+    }
   }, []);
 
   return (
