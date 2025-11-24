@@ -210,23 +210,23 @@ function Grid() {
   //   setGrid([...grid]);
   // };
 
-  const keydown = (e) => {
-    if (e.code === 'Space') {
-      setStart(true);
-    }
-    else if (e.code === 'ArrowRight') {
-      movePiece(0, 1);
-    }
-    else if (e.code === 'ArrowLeft') {
-      movePiece(0, -1);
-    }
-    else if (e.code === 'ArrowDown') {
-      movePiece(1, 0);
-    }
-    else if (e.code === 'ArrowUp') {
-      rotateMatrix90();
-    }
-  }
+  // const keydown = (e) => {
+  //   if (e.code === 'Space') {
+  //     setStart(true);
+  //   }
+  //   else if (e.code === 'ArrowRight') {
+  //     movePiece(0, 1);
+  //   }
+  //   else if (e.code === 'ArrowLeft') {
+  //     movePiece(0, -1);
+  //   }
+  //   else if (e.code === 'ArrowDown') {
+  //     movePiece(1, 0);
+  //   }
+  //   else if (e.code === 'ArrowUp') {
+  //     rotateMatrix90();
+  //   }
+  // }
 
   // useEffect(() => {
   //   document.addEventListener("keydown", keydown)
@@ -240,41 +240,38 @@ function Grid() {
   //   }
   // }, [currentPiece, start, playerBag]);
 
-  useEffect(() => {
-    document.addEventListener("keydown", keydown)
-    return () => {
-      document.removeEventListener("keydown", keydown);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (!currentPiece) newPiece();
+  // }, []);
 
-  return (
-    <>
-      <div className="grid bg-transparent border border-black">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${grid[0].length}, 20px)`,
-            gridTemplateRows: `repeat(${grid.length}, 20px)`
-          }}
-        >
-          {grid.map((row, rowIndex) =>
-            row.map((cell, colIndex) => (
-              <div
-                className={cell === 0 ? "E" : cell}
-                key={`${rowIndex}-${colIndex}`}
-                style={{
-                  width: "20px",
-                  height: "20px",
-                  border: "0.5px solid",
-                  borderColor: "gray"
-                }}
-              />
-            ))
-          )}
-        </div>
-      </div>
-    </>
-  );
+//   return (
+//     <>
+//       <div className="grid bg-transparent border border-black">
+//         <div
+//           style={{
+//             display: "grid",
+//             gridTemplateColumns: `repeat(${grid[0].length}, 20px)`,
+//             gridTemplateRows: `repeat(${grid.length}, 20px)`
+//           }}
+//         >
+//           {grid.map((row, rowIndex) =>
+//             row.map((cell, colIndex) => (
+//               <div
+//                 className={cell === 0 ? "E" : cell}
+//                 key={`${rowIndex}-${colIndex}`}
+//                 style={{
+//                   width: "20px",
+//                   height: "20px",
+//                   border: "0.5px solid",
+//                   borderColor: "gray"
+//                 }}
+//               />
+//             ))
+//           )}
+//         </div>
+//       </div>
+//     </>
+//   );
 }
 
 export default Grid;

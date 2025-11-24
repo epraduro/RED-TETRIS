@@ -1,4 +1,4 @@
-export default class Piece {
+export class Piece {
   static shapes = {
     I: [
       [0, 0, 0, 0],
@@ -38,7 +38,7 @@ export default class Piece {
   }
 
   constructor(type) {
-    this.shape = shapes[type];
+    this.shape = Piece.shapes[type];
     this.color = type;
     this.x = 0;
     this.y = 0;

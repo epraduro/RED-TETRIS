@@ -1,4 +1,6 @@
-class Player {
+import { Piece } from './Piece.js'
+
+export class Player {
   static DEFAULT_BAG = ["J", "L", "O", "T", "S", "Z", "I"];
 
   bag = [];
@@ -34,7 +36,7 @@ class Player {
   }
 
   getNewBag() {
-    const newArray = Array.from(DEFAULT_BAG);
+    const newArray = Array.from(Player.DEFAULT_BAG);
     for (let i = newArray.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
@@ -48,7 +50,7 @@ class Player {
   newPiece() {
     let newP = this.bag ? this.bag.shift() : null;
     if (this.bag.length <= 2) {
-      newBag = [...this.bag, ...getNewBag()];
+      let newBag = [...this.bag, ...this.getNewBag()];
       if (!newP) {
         this.currentPiece = newBag.shift();
       } else {
