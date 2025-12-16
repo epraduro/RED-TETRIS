@@ -231,7 +231,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
     ws.close(1008);
     return;
   }
-  let player = new Player(playerName, ws);
+  let player = new Player(playerName, ws, game.createRand());
   game.players.push(player);
 
   console.log(`Client connecté au jeu: ${game.name}. Total: ${game.players.length}`);
@@ -242,10 +242,20 @@ wss.on('connection', (ws, request, players, game, playerName) => {
 
     if (msg.type === 'startGame')
     {
-      game.status = (started);
-      broadCastToGame(game, 'started', 'game has started');
+      game.status = "started";
+      game.broadcast("started", { data: game.forSend() })
+      game.start()
     }
-
+    if (msg.type === "move") {
+      player.movePiece(msg.x, msg.y)
+    }
+    if (msg.type === "rotate") {
+      player.drawRotatedPiece()
+    }
+    if (msg.type === "restart") {
+      console.log("restart")
+      game.restart()
+    }
   });
 
   ws.on('close', () => {
@@ -258,7 +268,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   
     if (game.players.length > 0 && game.players[0]) {
       game.owner = game.players[0].name;
-      broadCastToGame(game, 'owner', `${game.owner}`);
+      game.broadcast('owner', {message: `${game.owner}`})
     }
 
     if (game.players.length === 0) {
@@ -267,16 +277,6 @@ wss.on('connection', (ws, request, players, game, playerName) => {
     }
   });
 });
-
-export const broadCastToGame = (game, type, message) =>{
-  if (!game) return;
-
-  game.players.forEach(player => {
-    if (player.ws.readyState === WebSocket.OPEN) {
-      player.ws.send(JSON.stringify({type: `${type}`, message: `${message}`}));
-    }
-  });
-}
 
 const PORT = 4000;
 server.listen(PORT, () => {

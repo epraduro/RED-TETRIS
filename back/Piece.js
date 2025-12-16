@@ -41,10 +41,10 @@ export class Piece {
     this.shape = Piece.shapes[type];
     this.color = type;
     this.x = 0;
-    this.y = 0;
+    this.y = 3;
   }
 
-  rotateMatrix90() {
+  rotateMatrix90 = () => {
     const n = this.shape.length;
     let rotated = Array.from({ length: n }, () => Array(n).fill(0));
   
@@ -53,24 +53,19 @@ export class Piece {
         rotated[j][n - 1 - i] = this.shape[i][j];
       }
     }
-
-    if (!collaps(0, 0, rotated)) {
-      undraw()
-      this.shape = rotated;
-      draw()
-    }
+    return rotated
   }
 
-  movePiece = (x, y) => {
-    if (this.shape) {
-      if (!collaps(x, y)) {
-        undraw();
-        this.shape.x = this.shape.x + x;
-        this.shape.y = this.shape.y + y;
-        draw();
-        return true;
-      }
-    }
-    return false;
-  }
+  // movePiece = (x, y) => {
+  //   if (this.shape) {
+  //     if (!collaps(x, y)) {
+  //       undraw();
+  //       this.shape.x = this.shape.x + x;
+  //       this.shape.y = this.shape.y + y;
+  //       draw();
+  //       return true;
+  //     }
+  //   }
+  //   return false;
+  // }
 }
