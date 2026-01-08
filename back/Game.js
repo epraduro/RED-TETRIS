@@ -30,7 +30,21 @@ export class Game {
           if (!player.next()) {
             this.loser++;
           }
-        } else if ( player.currentPiece !== null && player.lose === true &&this.players.length < 3) {
+          if (player.bonus > 1) {
+            this.players.forEach((p) => {
+              if (p.name !== player.name) {
+                for (let i = 0; i != player.bonus - 1; i++) {
+                  p.addMalus();
+                }
+              }
+            });
+            player.bonus = 0;
+          }
+        } else if (
+          player.currentPiece !== null &&
+          player.lose === true &&
+          this.players.length < 3
+        ) {
           if (!this.playerFailed.includes(player.name)) {
             this.playerFailed.push(player.name);
             this.loser++;
@@ -57,6 +71,7 @@ export class Game {
           grid: player.grid,
           bag: player.bag,
           lose: player.lose,
+          opponentGrid: player.opponentGrid
         })
     );
     return {

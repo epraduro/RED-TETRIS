@@ -4,6 +4,7 @@ import axios from "axios";
 import { showToast } from "../Toasts";
 import { useNavigate } from "react-router-dom";
 import Grid from "./Grid";
+import OpponentGrid from "./OpponentGrid";
 
 function Game() {
   const { gameName, playerName } = useParams();
@@ -140,11 +141,29 @@ function Game() {
 
         {gameStatus !== "waiting" && dataGame && (
           <>
-            {console.log("GAMESTATUS:", gameStatus)}
-            <Grid
-              grid={dataGame.players[playerName].grid}
-              playerBag={dataGame.players[playerName].bag}
-            />
+            <div className="flex justify-between gap-8">
+                <Grid
+                  main={true}
+                  grid={dataGame.players[playerName].grid}
+                  playerBag={dataGame.players[playerName].bag}
+                  w="30px"
+                  h="30px"
+                />
+
+              {Object.entries(dataGame.players).map((obj) => {
+                const [name, player] = obj;
+                if (name !== playerName) {
+                  return (
+                    <OpponentGrid
+                      key={player}
+                      grid={player.opponentGrid}
+                      w="10px"
+                      h="10px"
+                    />
+                  )
+                }
+              })}
+            </div>
           </>
         )}
 

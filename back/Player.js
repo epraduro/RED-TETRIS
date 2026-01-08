@@ -2,13 +2,36 @@ import { Piece } from './Piece.js'
 
 export class Player {
   static DEFAULT_BAG = ["J", "L", "O", "T", "S", "Z", "I"];
-  // static DEFAULT_BAG = ["I", "I", "I", "I", "I", "I", "I"];
+  // static DEFAULT_BAG = ["O", "O", "O", "O", "O", "O", "O"];
 
   currentPiece = null;
   bag = [];
   lose = false;
   name;
   rand;
+  bonus = 0;
+  opponentGrid = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  ];
 
   grid = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -33,6 +56,8 @@ export class Player {
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   ];
 
+  score = 0;
+
   constructor(name, ws, rand = undefined) {
     this.name = name;
     this.ws = ws
@@ -55,9 +80,9 @@ export class Player {
   }
 
   newPiece() {
-    if (this.bag.length <= 2) this.getNewBag()
+    this.opponentGrid = JSON.parse(JSON.stringify(this.grid));
+    if (this.bag.length <= 3) this.getNewBag()
     this.currentPiece = this.bag.shift();
-    console.log("new")
     this.draw()
   }
 
@@ -119,7 +144,7 @@ export class Player {
         if (x >= 1) {
           this.draw();
           this.goNext();
-          this.update()
+          // this.update()
           return !collide
         }
       }
@@ -164,11 +189,19 @@ export class Player {
 
   removefilled() {
     for (let i = 0; i < this.grid.length; i++) {
-      if (this.grid[i].every(v => v !== 0)) {
+      if (this.grid[i].every(v => v !== 0 && v !== 2)) {
         this.grid.splice(i, 1)
         this.grid.splice(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        this.bonus++;
       }
     }
+  }
+
+  addMalus() {
+    this.undraw()
+    this.grid.splice(0, 1)
+    this.grid.splice(19, 0, [2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+    this.draw()
   }
 
   async update() {
@@ -195,6 +228,7 @@ export class Player {
     for (const row of shape) {
       console.log(row.join(' '))
     }
+    console.log("-------------------------")
   }
 
   losing() {
