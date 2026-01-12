@@ -5,7 +5,7 @@ export const removePlayer = (players, playerName) => {
 
     if (index !== -1) {
         const [removed] = players.splice(index, 1);
-        console.log(`${removed.name} supprimé`);
+        // console.log(`${removed.name} supprimé`);
         return [...players];
     }
 

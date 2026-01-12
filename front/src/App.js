@@ -5,6 +5,7 @@ import Login from './users/LoginForm';
 import Register from './users/Register';
 import { ToastContainer } from 'react-toastify';
 import Grid from "./game/Grid";
+import Profile from "./game/Profile";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path='/login' element={<Login/>} />
             <Route path='/games/:gameName/:playerName' element={<Game/>} />
             <Route path="/grid" element={<Grid/>} />
+            <Route path="/profile" element={<Profile/>}/>
           </Routes>
       </Router>
       <ToastContainer/>

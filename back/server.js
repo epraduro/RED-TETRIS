@@ -144,7 +144,7 @@ app.get("/api/home", authenticateToken, (req, res) => {
 
 app.post('/games/:room/:player_name', async (req, res) => {
     const { room, player_name } = req.params;
-    console.log(room, player_name);
+    // console.log(room, player_name);
     try {
       
         let player = await getUser(player_name);
@@ -165,14 +165,14 @@ app.post('/games/:room/:player_name', async (req, res) => {
 
 
 server.on('upgrade', async (request, socket, head) => {
-  const host = request.headers['host'] || 'localhost:4000';
+  const host = request.headers['host'] || '10.18.198.45:4000';
   const url = new URL(request.url, `http://${host}`);
   const parts = url.pathname.split('/');
   let players = [];
 
   if (parts.length !== 4 || parts[1] !== 'games')
   {
-    console.log('URL invalide:', url.pathname);
+    // console.log('URL invalide:', url.pathname);
     socket.destroy();
     return;
   }
@@ -188,14 +188,14 @@ server.on('upgrade', async (request, socket, head) => {
   const game = getGameValue(gameName);
   if (!game) 
   {
-    console.log('Partie inexistante');
+    // console.log('Partie inexistante');
     socket.destroy();
     return;
   }
   
   if (!game.id)
   {
-    console.log("Error with the id!");
+    // console.log("Error with the id!");
     socket.destroy();
     return; 
   }
@@ -234,7 +234,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   let player = new Player(playerName, ws, game.createRand());
   game.players.push(player);
 
-  console.log(`Client connecté au jeu: ${game.name}. Total: ${game.players.length}`);
+  // console.log(`Client connecté au jeu: ${game.name}. Total: ${game.players.length}`);
   ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
 
   ws.on('message', async (data) => {
@@ -253,17 +253,20 @@ wss.on('connection', (ws, request, players, game, playerName) => {
       player.drawRotatedPiece()
     }
     if (msg.type === "restart") {
-      console.log("restart")
+      // console.log("restart")
       game.restart()
+    }
+    if (msg.type === "spacebar") {
+      player.spacebar()
     }
   });
 
   ws.on('close', () => {
     game = getGameValue(game.name);
-    console.log('CLOSE DÉCLENCHÉ !');
+    // console.log('CLOSE DÉCLENCHÉ !');
 
     game.players = removePlayer(players, playerName);
-    console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${game.players.length}`);
+    // console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${game.players.length}`);
 
   
     if (game.players.length > 0 && game.players[0]) {
@@ -273,12 +276,12 @@ wss.on('connection', (ws, request, players, game, playerName) => {
 
     if (game.players.length === 0) {
       games.delete(game);
-      console.log(`Jeu ${game.name} supprimé (vide)`);
+      // console.log(`Jeu ${game.name} supprimé (vide)`);
     }
   });
 });
 
 const PORT = 4000;
 server.listen(PORT, () => {
-  console.log(`Server start at http://localhost:${PORT}`);
+  console.log(`Server start at http://10.18.198.45:${PORT}`);
 });

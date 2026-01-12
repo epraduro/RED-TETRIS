@@ -15,7 +15,7 @@ const Register = () => {
     e.preventDefault();
     setErrors("");
 
-    const response = await axios.post("http://localhost:4000/api/register", {
+    const response = await axios.post("http://10.18.198.45:4000/api/register", {
       name,
       password,
     });

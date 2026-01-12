@@ -18,7 +18,7 @@ function Game() {
   const createGame = async () => {
     try {
       const reponse = await axios.post(
-        `http://localhost:4000/games/${gameName}/${playerName}`
+        `http://10.18.198.45:4000/games/${gameName}/${playerName}`
       );
       if (reponse.status === 201) console.log("game created.");
     } catch {
@@ -32,7 +32,7 @@ function Game() {
     if (!wsRef.current) {
       createGame().then(() => {
         const newSocket = new WebSocket(
-          `ws://localhost:4000/games/${gameName}/${playerName}`
+          `ws://10.18.198.45:4000/games/${gameName}/${playerName}`
         );
         wsRef.current = newSocket;
 
@@ -105,7 +105,12 @@ function Game() {
     wsRef.current.send(JSON.stringify({ type: "restart" }));
   };
 
+  const spacebar = () => {
+    wsRef.current.send(JSON.stringify({ type: "spacebar" }));
+  };
+
   const keydown = (e) => {
+    // console.log("code:", e.code);
     if (e.code === "ArrowRight") {
       movePiece(0, 1);
     } else if (e.code === "ArrowLeft") {
@@ -114,6 +119,8 @@ function Game() {
       movePiece(1, 0);
     } else if (e.code === "ArrowUp") {
       rotate();
+    } else if (e.code === "Space") {
+      spacebar();
     }
   };
 
@@ -142,25 +149,27 @@ function Game() {
         {gameStatus !== "waiting" && dataGame && (
           <>
             <div className="flex justify-between gap-8">
-                <Grid
-                  main={true}
-                  grid={dataGame.players[playerName].grid}
-                  playerBag={dataGame.players[playerName].bag}
-                  w="30px"
-                  h="30px"
-                />
+              <Grid
+                main={true}
+                grid={dataGame.players[playerName].grid}
+                playerBag={dataGame.players[playerName].bag}
+                w="30px"
+                h="30px"
+              />
 
               {Object.entries(dataGame.players).map((obj) => {
                 const [name, player] = obj;
+                // console.log("player name:", name)
                 if (name !== playerName) {
                   return (
                     <OpponentGrid
-                      key={player}
+                      key={name}
+                      playerName={name}
                       grid={player.opponentGrid}
                       w="10px"
                       h="10px"
                     />
-                  )
+                  );
                 }
               })}
             </div>
@@ -168,14 +177,19 @@ function Game() {
         )}
 
         {dataGame &&
+          gameStatus !== "waiting" &&
+          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>
+        }
+
+        {/* {dataGame &&
           gameStatus === "finished" &&
-          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>}
+          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>} */}
 
         {dataGame &&
           gameStatus === "finished" &&
           dataGame?.players[playerName]?.lose === false && (
             <p> You win the game !</p>
-          )}
+        )}
 
         {dataGame && gameStatus === "finished" && gameOwner === playerName && (
           <button onClick={restart}> Restart game ! </button>

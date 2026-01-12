@@ -144,7 +144,6 @@ export class Player {
         if (x >= 1) {
           this.draw();
           this.goNext();
-          // this.update()
           return !collide
         }
       }
@@ -154,6 +153,16 @@ export class Player {
     }
     return false;
   };
+
+  spacebar() {
+    if (this.currentPiece && !this.lose) {
+      this.undraw(); 
+      while (!this.collaps(1, 0)) {
+        this.currentPiece.x++;
+      }
+      this.draw();
+    }
+  }
 
   collaps(nx, ny, nshape = null) {
     const shape = nshape ? nshape : this.currentPiece.shape;

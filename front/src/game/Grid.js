@@ -1,5 +1,4 @@
 function Grid({ grid, playerBag, w, h }) {
-  console.log("playerbag:", playerBag);
 
   const getClass = (cell) => {
     if (cell === 0) {
@@ -11,6 +10,12 @@ function Grid({ grid, playerBag, w, h }) {
     }
   };
 
+  const isSquare = (piece) => {
+    if (piece.color === 'O')
+      return true;
+    return false;
+  }
+
   return (
     <>
       {/* PREVIEW PIECES */}
@@ -18,7 +23,7 @@ function Grid({ grid, playerBag, w, h }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${playerBag[0].shape.length}, 25px)`,
+            gridTemplateColumns: `repeat(${isSquare(playerBag[0]) ? playerBag[0].shape.length + 1 : playerBag[0].shape.length}, 25px)`,
             gridTemplateRows: `repeat(${playerBag[0].shape[0].length}, 25px)`,
           }}
         >
@@ -34,12 +39,13 @@ function Grid({ grid, playerBag, w, h }) {
           )}
         </div>
         <div className="flex flex-col items-center">
-          {Object.values(playerBag).slice(1, 3).map((piece) => {
+          {Object.values(playerBag).slice(1, 3).map((piece, index) => {
               return (
                 <div
+                  key={index}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: `repeat(${piece.shape.length}, 25px)`,
+                    gridTemplateColumns: `repeat(${isSquare(piece) ? piece.shape.length + 1 : piece.shape.length}, 25px)`,
                     gridTemplateRows: `repeat(${piece.shape[0].length}, 25px)`,
                   }}
                 >

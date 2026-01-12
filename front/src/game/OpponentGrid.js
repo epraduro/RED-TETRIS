@@ -1,4 +1,4 @@
-function OpponentGrid({ grid, w, h }) {
+function OpponentGrid({ grid, playerName, w, h }) {
   
 	const getClass = (cell) => {
 	  if (cell === 0) {
@@ -21,6 +21,8 @@ function OpponentGrid({ grid, w, h }) {
   
 	return (
 	  <>
+	  <div className="flex flex-col items-center">
+	  	<h1> {playerName} </h1>
 		{/* GRID */}
 		<div className="grid bg-transparent">
 		  <div
@@ -39,6 +41,7 @@ function OpponentGrid({ grid, w, h }) {
 			  ))
 			)}
 		  </div>
+		</div>
 		</div>
 		</>
 	);
