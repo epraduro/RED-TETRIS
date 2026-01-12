@@ -10,6 +10,7 @@ export class Player {
   name;
   rand;
   bonus = 0;
+  score = 0;
   opponentGrid = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -197,12 +198,24 @@ export class Player {
   }
 
   removefilled() {
+    let linesCleared = 0;
     for (let i = 0; i < this.grid.length; i++) {
       if (this.grid[i].every(v => v !== 0 && v !== 2)) {
         this.grid.splice(i, 1)
         this.grid.splice(0, 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         this.bonus++;
+        linesCleared++;
       }
+    }
+    // Ajouter les points en fonction du nombre de lignes complétées
+    if (linesCleared > 0) {
+      const scoreTable = {
+        1: 40,
+        2: 100,
+        3: 300,
+        4: 1200
+      };
+      this.score += scoreTable[linesCleared] || 0;
     }
   }
 

@@ -71,6 +71,7 @@ export class Game {
           grid: player.grid,
           bag: player.bag,
           lose: player.lose,
+          score: player.score,
           opponentGrid: player.opponentGrid
         })
     );

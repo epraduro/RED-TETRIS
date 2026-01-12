@@ -18,6 +18,16 @@ db.serialize(() => {
     password TEXT NOT NULL,
     token TEXT
   )`);
+
+  // Table pour sauvegarder l'historique des parties
+  db.run(`CREATE TABLE IF NOT EXISTS games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    score INTEGER NOT NULL,
+    date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`);
 });
 
 export async function addUser(name, password) {
@@ -93,6 +103,54 @@ export async function addToken(token, name) {
       }
       resolve(token);
     })
+  })
+}
+
+export async function saveGame(userId, score, name) {
+  return new Promise((resolve, reject) => {
+    db.run(`INSERT INTO games (user_id, score, name) VALUES (?, ?, ?)`, [userId, score, name], function (err) {
+      if (err) {
+        resolve(null)
+      } else {
+        db.get("SELECT * FROM games WHERE id = ?", [this.lastID], (err, row) => {
+          if (err) {
+            resolve(null)
+          } else {
+            resolve(row)
+          }
+        })
+      }
+    });
+  })
+}
+
+export async function getUserGames(userId) {
+  return new Promise((resolve, reject) => {
+    db.all(`SELECT id, score, date, name FROM games WHERE user_id = ? ORDER BY date DESC`, [userId], (err, rows) => {
+      if (err) {
+        resolve([])
+      } else {
+        resolve(rows)
+      }
+    });
+  })
+}
+
+export async function getBestScores(limit = 10) {
+  return new Promise((resolve, reject) => {
+    db.all(`
+      SELECT u.name, g.score, g.date 
+      FROM games g
+      JOIN users u ON g.user_id = u.id
+      ORDER BY g.score DESC
+      LIMIT ?
+    `, [limit], (err, rows) => {
+      if (err) {
+        resolve([])
+      } else {
+        resolve(rows)
+      }
+    });
   })
 }
 

@@ -23,7 +23,7 @@ function Home() {
         }
 
         try {
-            const response = await axios.get('http://10.18.198.45:4000/api/home', {
+            const response = await axios.get('http://10.18.192.97:4000/api/home', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -72,7 +72,7 @@ function Home() {
 			</div>
 		</div>
 		<div>
-			<a href='/profile'>Profile</a>
+			<a href={`/profile/${playerName}`}>Profile</a>
 		</div>
 		</>
 	);

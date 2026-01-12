@@ -1,9 +1,9 @@
-import { addUser, getUser, addToken, deleteToken, verifyToken } from "./db.js";
+import { addUser, getUser, addToken, deleteToken, verifyToken, saveGame, getUserGames } from "./db.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import http from 'http';
+import http, { get } from 'http';
 import { WebSocketServer } from 'ws';
 import { Player } from './Player.js';
 import { Game } from "./Game.js";
@@ -165,7 +165,7 @@ app.post('/games/:room/:player_name', async (req, res) => {
 
 
 server.on('upgrade', async (request, socket, head) => {
-  const host = request.headers['host'] || '10.18.198.45:4000';
+  const host = request.headers['host'] || '10.18.192.97:4000';
   const url = new URL(request.url, `http://${host}`);
   const parts = url.pathname.split('/');
   let players = [];
@@ -281,7 +281,43 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   });
 });
 
+app.post('/api/savegame', authenticateToken, async (req, res) => {
+  const { name, score, gameName } = req.body;
+
+  let user_id = (await getUser(name)).id;
+
+  if (!user_id || !score) {
+    return res.status(400).json({ error: 'Missing user_id or score' });
+  }
+
+  try {
+    await saveGame(user_id, score, gameName);
+    res.status(201).json({ message: 'Game saved successfully' });
+  } catch (error) {
+    console.error('Error saving game:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/getgames', authenticateToken, async (req, res) => {
+  const { name } = req.query;
+
+  console.log("Fetching games for user:", name);
+
+  const user = await getUser(name);
+
+  if (!user?.id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+  const games = await getUserGames(user?.id);
+
+  if (!games) {
+    return res.status(400).json({ error: 'No games found for this user' });
+  }
+  res.status(200).json({ games });
+});
+
 const PORT = 4000;
 server.listen(PORT, () => {
-  console.log(`Server start at http://10.18.198.45:${PORT}`);
+  console.log(`Server start at http://10.18.192.97:${PORT}`);
 });

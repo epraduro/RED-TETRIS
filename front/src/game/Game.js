@@ -18,7 +18,7 @@ function Game() {
   const createGame = async () => {
     try {
       const reponse = await axios.post(
-        `http://10.18.198.45:4000/games/${gameName}/${playerName}`
+        `http://10.18.192.97:4000/games/${gameName}/${playerName}`
       );
       if (reponse.status === 201) console.log("game created.");
     } catch {
@@ -32,7 +32,7 @@ function Game() {
     if (!wsRef.current) {
       createGame().then(() => {
         const newSocket = new WebSocket(
-          `ws://10.18.198.45:4000/games/${gameName}/${playerName}`
+          `ws://10.18.192.97:4000/games/${gameName}/${playerName}`
         );
         wsRef.current = newSocket;
 
@@ -40,7 +40,7 @@ function Game() {
           newSocket.send(JSON.stringify({ type: "join", player: playerName }));
         };
 
-        newSocket.onmessage = (event) => {
+        newSocket.onmessage = async (event) => {
           const data = JSON.parse(event.data);
           if (data.type === "connected") setGameOwner(data.owner);
           else if (data.type === "started") {
@@ -49,6 +49,22 @@ function Game() {
             setDataGame(data.data);
           } else if (data.type === "update") {
             setDataGame(data.data);
+            if (data.data?.players[playerName]?.lose && !dataGame?.players[playerName]?.lose) {
+              try {
+                await axios.post(`http://10.18.192.97:4000/api/savegame`, {
+                  name: playerName,
+                  score: data.data.players[playerName].score || 0,
+                  gameName: gameName,
+                }, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`
+                  }
+                });
+                console.log("Game saved successfully when player lost");
+              } catch (error) {
+                console.error("Failed to save game:", error);
+              }
+            }
           } else if (data.type === "error") {
             setMessage(data.message);
             showToast("error", data.message);
@@ -101,7 +117,8 @@ function Game() {
     wsRef.current.send(JSON.stringify({ type: "rotate", z }));
   };
 
-  const restart = () => {
+  const restart = async() => {
+    console.log("restart clicked");
     wsRef.current.send(JSON.stringify({ type: "restart" }));
   };
 
@@ -134,8 +151,11 @@ function Game() {
   return (
     <>
       <div className="flex flex-center justify-center items-center flex-col w-full h-full bg-gray-500">
-        <div>
-          Jeu: {gameName}, player: {playerName}
+        <div className="text-white text-2xl mb-4">
+          <p>Jeu: {gameName} | Joueur: {playerName}</p>
+          {dataGame?.players[playerName]?.score !== undefined && (
+            <p className="text-3xl font-bold text-yellow-400">Score: {dataGame.players[playerName].score}</p>
+          )}
         </div>
 
         {gameOwner !== playerName && gameStatus === "waiting" && (
