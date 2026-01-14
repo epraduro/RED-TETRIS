@@ -129,11 +129,18 @@ function Game() {
     return () => {
       document.removeEventListener("keydown", keydown);
     };
-  }, []);
+  }, [keydown]);
+
+  const littleGame = (len) => {
+    if (len <= 3)
+      return true
+    else
+      return false
+  }
 
   return (
     <>
-      <div className="flex flex-center justify-center items-center flex-col w-full h-full bg-gray-500">
+      <div className="flex flex-center justify-center items-center flex-col">
         <div>
           Jeu: {gameName}, player: {playerName}
         </div>
@@ -147,49 +154,114 @@ function Game() {
         )}
 
         {gameStatus !== "waiting" && dataGame && (
-          <>
-            <div className="flex justify-between gap-8">
-              <Grid
-                main={true}
-                grid={dataGame.players[playerName].grid}
-                playerBag={dataGame.players[playerName].bag}
-                w="30px"
-                h="30px"
-              />
-
+          <div className="flex flex-col sm:flex-row gap-4 items-center lg:items-start">
+            {/* OPPONENT GRIDS */}
+            <div className={littleGame(dataGame.players.length) ? `grid grid-cols-[${dataGame.players.length}] gap-2` : `grid grid-cols-[${dataGame.players.length - 1}] gap-2`}> {/* grid-cols-[${dataGame.players.length}] */}
               {Object.entries(dataGame.players).map((obj) => {
                 const [name, player] = obj;
-                // console.log("player name:", name)
                 if (name !== playerName) {
                   return (
                     <OpponentGrid
                       key={name}
                       playerName={name}
                       grid={player.opponentGrid}
-                      w="10px"
-                      h="10px"
+                      // w="10px"
+                      // h="10px"
                     />
                   );
                 }
               })}
+              {/* {Object.entries(dataGame.players).map((obj) => {
+                const [name, player] = obj;
+                if (name !== playerName) {
+                  return (
+                    <OpponentGrid
+                      key={name}
+                      playerName={name}
+                      grid={player.opponentGrid}
+                      // w="10px"
+                      // h="10px"
+                    />
+                  );
+                }
+              })}
+              {Object.entries(dataGame.players).map((obj) => {
+                const [name, player] = obj;
+                if (name !== playerName) {
+                  return (
+                    <OpponentGrid
+                      key={name}
+                      playerName={name}
+                      grid={player.opponentGrid}
+                      // w="10px"
+                      // h="10px"
+                    />
+                  );
+                }
+              })}
+              {Object.entries(dataGame.players).map((obj) => {
+                const [name, player] = obj;
+                if (name !== playerName) {
+                  return (
+                    <OpponentGrid
+                      key={name}
+                      playerName={name}
+                      grid={player.opponentGrid}
+                      // w="10px"
+                      // h="10px"
+                    />
+                  );
+                }
+              })}
+              {Object.entries(dataGame.players).map((obj) => {
+                const [name, player] = obj;
+                if (name !== playerName) {
+                  return (
+                    <OpponentGrid
+                      key={name}
+                      playerName={name}
+                      grid={player.opponentGrid}
+                      // w="10px"
+                      // h="10px"
+                    />
+                  );
+                }
+              })}
+              {Object.entries(dataGame.players).map((obj) => {
+                const [name, player] = obj;
+                if (name !== playerName) {
+                  return (
+                    <OpponentGrid
+                      key={name}
+                      playerName={name}
+                      grid={player.opponentGrid}
+                      // w="10px"
+                      // h="10px"
+                    />
+                  );
+                }
+              })} */}
             </div>
-          </>
+            {/* PLAYER GRID */}
+            <div>
+              <Grid
+                main={true}
+                grid={dataGame.players[playerName].grid}
+                playerBag={dataGame.players[playerName].bag}
+              />
+            </div>
+          </div>
         )}
 
         {dataGame &&
           gameStatus !== "waiting" &&
-          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>
-        }
-
-        {/* {dataGame &&
-          gameStatus === "finished" &&
-          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>} */}
+          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>}
 
         {dataGame &&
           gameStatus === "finished" &&
           dataGame?.players[playerName]?.lose === false && (
             <p> You win the game !</p>
-        )}
+          )}
 
         {dataGame && gameStatus === "finished" && gameOwner === playerName && (
           <button onClick={restart}> Restart game ! </button>

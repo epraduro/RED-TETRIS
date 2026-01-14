@@ -23,7 +23,7 @@ function Home() {
         }
 
         try {
-            const response = await axios.get('http://10.18.198.45:4000/api/home', {
+            const response = await axios.get(`http://10.18.198.45:4000/api/home`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -50,7 +50,6 @@ function Home() {
 	}, []);
 
 	return (
-		<>
 		<div className="w-full flex flex-col items-center justify-center">
 			<p className="font-caesar flex text-[80px]">
 				RED-TETRIS
@@ -70,11 +69,8 @@ function Home() {
 					Creer 
 				</button>
 			</div>
-		</div>
-		<div>
 			<a href='/profile'>Profile</a>
 		</div>
-		</>
 	);
 }
 

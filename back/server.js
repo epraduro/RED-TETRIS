@@ -165,7 +165,7 @@ app.post('/games/:room/:player_name', async (req, res) => {
 
 
 server.on('upgrade', async (request, socket, head) => {
-  const host = request.headers['host'] || '10.18.198.45:4000';
+  const host = request.headers['host'] || `10.18.198.45:4000`;
   const url = new URL(request.url, `http://${host}`);
   const parts = url.pathname.split('/');
   let players = [];
@@ -247,10 +247,10 @@ wss.on('connection', (ws, request, players, game, playerName) => {
       game.start()
     }
     if (msg.type === "move") {
-      player.movePiece(msg.x, msg.y)
+      if (game.status !== "finished") player.movePiece(msg.x, msg.y)
     }
     if (msg.type === "rotate") {
-      player.drawRotatedPiece()
+      if (game.status !== "finished") player.drawRotatedPiece()
     }
     if (msg.type === "restart") {
       // console.log("restart")

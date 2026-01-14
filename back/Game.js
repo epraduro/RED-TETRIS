@@ -42,8 +42,7 @@ export class Game {
           }
         } else if (
           player.currentPiece !== null &&
-          player.lose === true &&
-          this.players.length < 3
+          player.lose === true //&& this.players.length < 3
         ) {
           if (!this.playerFailed.includes(player.name)) {
             this.playerFailed.push(player.name);
@@ -56,7 +55,7 @@ export class Game {
           this.finish();
         }
       } else {
-        if (this.loser === this.players.length - 1) {
+        if (this.loser === this.players.length - 1 || this.loser === this.players.length) {
           this.finish();
         }
       }
@@ -95,7 +94,7 @@ export class Game {
     this.loop = setInterval(() => {
       this.update();
       this.broadcast("update", { data: this.forSend() });
-    }, 800);
+    }, 1500);  //200
   }
 
   finish() {
@@ -108,6 +107,7 @@ export class Game {
     this.status = "waiting";
     this.seed = new Date().getTime();
     this.loser = 0;
+    this.playerFailed = [];
     for (const p of this.players) {
       for (const row of p.grid) {
         row.fill(0, 0, 10);

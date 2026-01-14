@@ -7,7 +7,7 @@ import { ToastContainer } from 'react-toastify';
 import Grid from "./game/Grid";
 import Profile from "./game/Profile";
 
-function App() {
+function App() {   // devrait afficher 127.0.0.1
   return (
     <>
       <Router>

@@ -1,4 +1,5 @@
-function Grid({ grid, playerBag, w, h }) {
+function Grid({ grid, playerBag }) {
+  // console.log("grid:", grid);
 
   const getClass = (cell) => {
     if (cell === 0) {
@@ -11,67 +12,27 @@ function Grid({ grid, playerBag, w, h }) {
   };
 
   const isSquare = (piece) => {
-    if (piece.color === 'O')
-      return true;
+    if (piece.color === "O") return true;
     return false;
-  }
+  };
 
   return (
     <>
-      {/* PREVIEW PIECES */}
-      <div className="flex flex-col bg-[#00003c] h-[300px] w-[125px] pt-5 items-center border border-white">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${isSquare(playerBag[0]) ? playerBag[0].shape.length + 1 : playerBag[0].shape.length}, 25px)`,
-            gridTemplateRows: `repeat(${playerBag[0].shape[0].length}, 25px)`,
-          }}
-        >
-          {playerBag[0].shape.map((row, rowIndex) =>
-            row.map((cell, colIndex) => (
-              <div
-                className={`${
-                  cell === 0 ? "transparent" : playerBag[0].color
-                  } border-[0.5px] border-[#00003c]`}
-                key={`${rowIndex}-${colIndex}`}
-              />
-            ))
-          )}
-        </div>
-        <div className="flex flex-col items-center">
-          {Object.values(playerBag).slice(1, 3).map((piece, index) => {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${isSquare(piece) ? piece.shape.length + 1 : piece.shape.length}, 25px)`,
-                    gridTemplateRows: `repeat(${piece.shape[0].length}, 25px)`,
-                  }}
-                >
-                  {piece.shape.map((row, rowIndex) =>
-                    row.map((cell, colIndex) => (
-                      <div
-                        className={`${
-                          cell === 0 ? "transparent" : "N"
-                          } border-[0.5px] border-[#00003c]`}
-                        key={`${rowIndex}-${colIndex}`}
-                      />
-                    ))
-                  )}
-                </div>
-              );
-            }
-          )}
-        </div>
-      </div>
+    <div className="flex flex-row">
       {/* GRID */}
       <div className="grid bg-transparent border border-white">
+        {/* <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${grid[0].length}, 30px)`,
+            gridTemplateRows: `repeat(${grid.length}, 30px)`,
+          }}
+        > */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${grid[0].length}, ${w})`,
-            gridTemplateRows: `repeat(${grid.length}, ${h})`,
+            gridTemplateColumns: `repeat(${grid[0].length}, var(--cell-main))`,
+            gridTemplateRows: `repeat(${grid.length}, var(--cell-main))`,
           }}
         >
           {grid.map((row, rowIndex) =>
@@ -83,6 +44,66 @@ function Grid({ grid, playerBag, w, h }) {
             ))
           )}
         </div>
+      </div>
+      {/* PREVIEW PIECES */}
+      <div className="flex flex-col bg-[#00003c] pt-5 items-center border border-white"> {/* h-[300px] w-[125px] */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(
+            ${
+              isSquare(playerBag[0])
+                ? playerBag[0].shape.length + 1
+                : playerBag[0].shape.length
+            },
+            var(--cell-preview)
+          )`,
+            gridTemplateRows: `repeat(${playerBag[0].shape[0].length}, var(--cell-preview))`,
+          }}
+        >
+          {playerBag[0].shape.map((row, rowIndex) =>
+            row.map((cell, colIndex) => (
+              <div
+                className={`${
+                  cell === 0 ? "transparent" : playerBag[0].color
+                } border-[0.5px] border-[#00003c]`}
+                key={`${rowIndex}-${colIndex}`}
+              />
+            ))
+          )}
+        </div>
+        <div className="flex flex-col items-center">
+          {Object.values(playerBag)
+            .slice(1, 3)
+            .map((piece, index) => {
+              return (
+                <div
+                  key={index}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${
+                      isSquare(piece)
+                        ? piece.shape.length + 1
+                        : piece.shape.length
+                    }, var(--cell-preview))`,
+                    gridTemplateRows: `repeat(${piece.shape[0].length}, var(--cell-preview))`,
+                  }}
+                >
+                  {piece.shape.map((row, rowIndex) =>
+                    row.map((cell, colIndex) => (
+                      <div
+                        className={`${
+                          cell === 0 ? "transparent" : "N"
+                        } border-[0.5px] border-[#00003c]`}
+                        key={`${rowIndex}-${colIndex}`}
+                      />
+                    ))
+                  )}
+                </div>
+              );
+            })}
+        </div>
+      </div>
       </div>
     </>
   );

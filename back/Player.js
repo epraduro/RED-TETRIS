@@ -125,11 +125,12 @@ export class Player {
   goNext() {
     this.removefilled();
     if (this.grid[0].some((v) => v !== 0)) {
+      this.opponentGrid = JSON.parse(JSON.stringify(this.grid));
       this.lose = true
     } else {
       this.newPiece();
     }
-    this.update();
+    // this.update();
   }
 
   movePiece(x, y) {

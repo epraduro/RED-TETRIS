@@ -5,6 +5,7 @@
 
 html {
   height: 100%;
+  background-color: gray;
 }
 
 body {
@@ -25,6 +26,13 @@ body {
   justify-content: center;
   align-items: center;
 }
+
+:root {
+  --cell-main: clamp(18px, 4vw, 30px);
+  --cell-preview: clamp(14px, 3vw, 25px);
+  --cell-opponent: clamp(6px, 2vw, 10px);
+}
+
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
