@@ -14,11 +14,12 @@ function Game() {
   const [dataGame, setDataGame] = useState(null);
   const wsRef = useRef(null);
   const navigate = useNavigate();
+  const [score, setScore] = useState(0);
 
   const createGame = async () => {
     try {
       const reponse = await axios.post(
-        `http://10.18.198.45:4000/games/${gameName}/${playerName}`
+        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
       );
       if (reponse.status === 201) console.log("game created.");
     } catch {
@@ -32,7 +33,7 @@ function Game() {
     if (!wsRef.current) {
       createGame().then(() => {
         const newSocket = new WebSocket(
-          `ws://10.18.198.45:4000/games/${gameName}/${playerName}`
+          `ws://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
         );
         wsRef.current = newSocket;
 
@@ -40,7 +41,7 @@ function Game() {
           newSocket.send(JSON.stringify({ type: "join", player: playerName }));
         };
 
-        newSocket.onmessage = (event) => {
+        newSocket.onmessage = async (event) => {
           const data = JSON.parse(event.data);
           if (data.type === "connected") setGameOwner(data.owner);
           else if (data.type === "started") {
@@ -48,7 +49,32 @@ function Game() {
             setMessage(data.message);
             setDataGame(data.data);
           } else if (data.type === "update") {
+            setScore(data.data.players[playerName].score);
             setDataGame(data.data);
+            
+            // if (
+            //   data.data?.players[playerName]?.lose &&
+            //   !dataGame?.players[playerName]?.lose
+            // ) {
+            //   try {
+            //     await axios.post(
+            //       `http://10.18.198.45:4000/api/savegame`,
+            //       {
+            //         name: playerName,
+            //         score: data.data.players[playerName].score || 0,
+            //         gameName: gameName,
+            //       },
+            //       {
+            //         headers: {
+            //           Authorization: `Bearer ${localStorage.getItem("token")}`,
+            //         },
+            //       }
+            //     );
+            //     console.log("Game saved successfully when player lost");
+            //   } catch (error) {
+            //     console.error("Failed to save game:", error);
+            //   }
+            // }
           } else if (data.type === "error") {
             setMessage(data.message);
             showToast("error", data.message);
@@ -67,6 +93,29 @@ function Game() {
               };
             });
           } else if (data.type === "finished") {
+            // if (
+            //   data.data?.players[playerName]?.lose &&
+            //   !dataGame?.players[playerName]?.lose
+            // ) {
+              try {
+                await axios.post(
+                  `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/savegame`,
+                  {
+                    name: playerName,
+                    score: data.data.players[playerName].score || 0,
+                    gameName: gameName,
+                  },
+                  {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                  }
+                );
+                console.log("Game saved successfully when player lost");
+              } catch (error) {
+                console.error("Failed to save game:", error);
+              }
+            // }
             setGameStatus("finished");
             setDataGame(data.data);
           } else if (data.type === "waiting") {
@@ -101,7 +150,8 @@ function Game() {
     wsRef.current.send(JSON.stringify({ type: "rotate", z }));
   };
 
-  const restart = () => {
+  const restart = async () => {
+    console.log("restart clicked");
     wsRef.current.send(JSON.stringify({ type: "restart" }));
   };
 
@@ -132,142 +182,133 @@ function Game() {
   }, [keydown]);
 
   const littleGame = (len) => {
-    if (len <= 3)
-      return true
-    else
-      return false
-  }
+    if (len <= 3) return true;
+    else return false;
+  };
 
   return (
-    <>
-      <div className="flex flex-center justify-center items-center flex-col">
-        <div>
-          Jeu: {gameName}, player: {playerName}
+    <div className="h-screen w-full bg-gradient-to-br from-slate-900 via-indigo-950 to-violet-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-indigo-800 rounded-lg opacity-20 animate-pulse"></div>
+        <div className="absolute bottom-32 right-20 w-24 h-24 bg-violet-800 rounded-lg opacity-20 animate-pulse"></div>
+        <div className="absolute top-1/2 right-1/4 w-20 h-20 bg-blue-800 rounded-lg opacity-20 animate-pulse"></div>
+      </div>
+
+      {/* Back to Home Link - Top Left */}
+      <div className="absolute top-4 left-4 z-20">
+        <a
+          href="/home"
+          className="inline-flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm border-2 border-indigo-500/50 rounded-lg px-4 py-2 text-violet-300 hover:text-violet-200 transition-colors duration-300 font-medium"
+        >
+          ← Retour à l'accueil
+        </a>
+      </div>
+
+      <div className="relative z-10 w-full max-w-6xl">
+        {/* Header */}
+        <div className="text-center mb-3">
+          <p className="font-caesar text-4xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 pb-2 drop-shadow-2xl">
+            RED-TETRIS
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+            <div className="inline-block bg-indigo-900/60 backdrop-blur-md border-2 border-indigo-400/50 rounded-lg px-6 py-2 shadow-lg shadow-indigo-500/30">
+              <p className="text-sm text-indigo-200">
+                Nom de la salle: <span className="font-bold text-violet-300">{gameName}</span> | Joueur: <span className="font-bold text-violet-300">{playerName}</span>
+              </p>
+            </div>
+            {gameStatus !== "waiting" && dataGame && (
+              <div className="inline-block bg-indigo-900/60 backdrop-blur-sm border-2 border-yellow-500/50 rounded-lg px-4 py-2 shadow-lg shadow-yellow-500/30">
+                <p className="text-sm font-bold text-yellow-400">
+                  Score: {score}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {gameOwner !== playerName && gameStatus === "waiting" && (
-          <p> Waiting for the game </p>
-        )}
+        </div>
 
-        {gameOwner === playerName && gameStatus === "waiting" && (
-          <button onClick={startGame}>Démarrer la partie</button>
-        )}
-
-        {gameStatus !== "waiting" && dataGame && (
-          <div className="flex flex-col sm:flex-row gap-4 items-center lg:items-start">
-            {/* OPPONENT GRIDS */}
-            <div className={littleGame(dataGame.players.length) ? `grid grid-cols-[${dataGame.players.length}] gap-2` : `grid grid-cols-[${dataGame.players.length - 1}] gap-2`}> {/* grid-cols-[${dataGame.players.length}] */}
-              {Object.entries(dataGame.players).map((obj) => {
-                const [name, player] = obj;
-                if (name !== playerName) {
-                  return (
-                    <OpponentGrid
-                      key={name}
-                      playerName={name}
-                      grid={player.opponentGrid}
-                      // w="10px"
-                      // h="10px"
-                    />
-                  );
-                }
-              })}
-              {/* {Object.entries(dataGame.players).map((obj) => {
-                const [name, player] = obj;
-                if (name !== playerName) {
-                  return (
-                    <OpponentGrid
-                      key={name}
-                      playerName={name}
-                      grid={player.opponentGrid}
-                      // w="10px"
-                      // h="10px"
-                    />
-                  );
-                }
-              })}
-              {Object.entries(dataGame.players).map((obj) => {
-                const [name, player] = obj;
-                if (name !== playerName) {
-                  return (
-                    <OpponentGrid
-                      key={name}
-                      playerName={name}
-                      grid={player.opponentGrid}
-                      // w="10px"
-                      // h="10px"
-                    />
-                  );
-                }
-              })}
-              {Object.entries(dataGame.players).map((obj) => {
-                const [name, player] = obj;
-                if (name !== playerName) {
-                  return (
-                    <OpponentGrid
-                      key={name}
-                      playerName={name}
-                      grid={player.opponentGrid}
-                      // w="10px"
-                      // h="10px"
-                    />
-                  );
-                }
-              })}
-              {Object.entries(dataGame.players).map((obj) => {
-                const [name, player] = obj;
-                if (name !== playerName) {
-                  return (
-                    <OpponentGrid
-                      key={name}
-                      playerName={name}
-                      grid={player.opponentGrid}
-                      // w="10px"
-                      // h="10px"
-                    />
-                  );
-                }
-              })}
-              {Object.entries(dataGame.players).map((obj) => {
-                const [name, player] = obj;
-                if (name !== playerName) {
-                  return (
-                    <OpponentGrid
-                      key={name}
-                      playerName={name}
-                      grid={player.opponentGrid}
-                      // w="10px"
-                      // h="10px"
-                    />
-                  );
-                }
-              })} */}
+        {/* Game Content */}
+        <div>
+          {gameOwner !== playerName && gameStatus === "waiting" && (
+            <div className="text-center py-12">
+              <p className="text-2xl text-indigo-200 animate-pulse">En attente du démarrage de la partie...</p>
             </div>
-            {/* PLAYER GRID */}
-            <div>
-              <Grid
-                main={true}
-                grid={dataGame.players[playerName].grid}
-                playerBag={dataGame.players[playerName].bag}
-              />
-            </div>
-          </div>
-        )}
-
-        {dataGame &&
-          gameStatus !== "waiting" &&
-          dataGame?.players[playerName]?.lose && <p> You loose the game !</p>}
-
-        {dataGame &&
-          gameStatus === "finished" &&
-          dataGame?.players[playerName]?.lose === false && (
-            <p> You win the game !</p>
           )}
 
-        {dataGame && gameStatus === "finished" && gameOwner === playerName && (
-          <button onClick={restart}> Restart game ! </button>
-        )}
+          {gameOwner === playerName && gameStatus === "waiting" && (
+            <div className="text-center py-12">
+              <button 
+                onClick={startGame}
+                className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-lg rounded-lg shadow-lg shadow-indigo-500/50 transition-all duration-300 transform hover:scale-105"
+              >
+                Démarrer la partie
+              </button>
+            </div>
+          )}
+
+          {gameStatus !== "waiting" && dataGame && (
+            <div className="space-y-3">
+              
+              <div className="flex flex-col lg:flex-row gap-3 items-center lg:items-start justify-center">
+                {/* OPPONENT GRIDS */}
+                <div className="grid grid-cols-3 lg:grid-cols-2 gap-2 justify-items-center">
+                  {Object.entries(dataGame.players).map((obj) => {
+                    const [name, player] = obj;
+                    if (name !== playerName) {
+                      return (
+                        <OpponentGrid
+                          key={name}
+                          playerName={name}
+                          grid={player.opponentGrid}
+                        />
+                      );
+                    }
+                  })}
+                </div>
+                {/* PLAYER GRID */}
+                <div className="relative">
+                  <Grid
+                    main={true}
+                    grid={dataGame.players[playerName].grid}
+                    playerBag={dataGame.players[playerName].bag}
+                  />
+
+                  {/* GAME OVER OVERLAY */}
+                  {dataGame &&
+                    gameStatus !== "waiting" &&
+                    (dataGame?.players[playerName]?.lose || gameStatus === "finished") && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 rounded-2xl">
+                        <div className="text-center space-y-6 p-4">
+                          {dataGame?.players[playerName]?.lose ? (
+                            <div className="bg-red-900/90 backdrop-blur-md border-2 border-red-500 rounded-2xl px-2 py-2 shadow-2xl shadow-red-500/50">
+                              <p className="text-xl font-bold text-red-100">Vous avez perdu !</p>
+                            </div>
+                          ) : gameStatus === "finished" && dataGame?.players[playerName]?.lose === false ? (
+                            <div className="bg-green-900/90 backdrop-blur-md border-2 border-green-500 rounded-2xl px-4 py-4 shadow-2xl shadow-green-500/50">
+                              <p className="text-2xl font-bold text-green-100">Vous avez gagné !</p>
+                            </div>
+                          ) : null}
+
+                          {gameStatus === "finished" && gameOwner === playerName && (
+                            <button 
+                              onClick={restart}
+                              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xl rounded-lg shadow-lg shadow-indigo-500/50 transition-all duration-300 transform hover:scale-105"
+                            >
+                              Redémarrer la partie !
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </>
+    // </div>
   );
 }
 

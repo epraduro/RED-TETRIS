@@ -18,9 +18,9 @@ function Grid({ grid, playerBag }) {
 
   return (
     <>
-    <div className="flex flex-row">
+    <div className="flex flex-row h-full">
       {/* GRID */}
-      <div className="grid bg-transparent border border-white">
+      <div className="grid bg-transparent border border-white h-full">
         {/* <div
           style={{
             display: "grid",
@@ -31,8 +31,8 @@ function Grid({ grid, playerBag }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${grid[0].length}, var(--cell-main))`,
-            gridTemplateRows: `repeat(${grid.length}, var(--cell-main))`,
+            gridTemplateColumns: `repeat(${grid[0].length}, var(--cell-main)  )`,
+            gridTemplateRows: `repeat(${grid.length}, var(--cell-main) )`,
           }}
         >
           {grid.map((row, rowIndex) =>
@@ -46,7 +46,7 @@ function Grid({ grid, playerBag }) {
         </div>
       </div>
       {/* PREVIEW PIECES */}
-      <div className="flex flex-col bg-[#00003c] pt-5 items-center border border-white"> {/* h-[300px] w-[125px] */}
+      <div className="flex flex-col bg-[#00003c] pt-5 items-center border border-white w-[125px] min-w-[125px]">
         <div
           style={{
             display: "grid",

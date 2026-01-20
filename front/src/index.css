@@ -28,9 +28,10 @@ body {
 }
 
 :root {
-  --cell-main: clamp(18px, 4vw, 30px);
-  --cell-preview: clamp(14px, 3vw, 25px);
-  --cell-opponent: clamp(6px, 2vw, 10px);
+  --cell-main: clamp(14px, 4vw, 20px);
+  /* --cell-main-sm: clamp(14px, 4vw, 20px); */
+  --cell-preview: clamp(12px, 3vw, 15px);
+  --cell-opponent: clamp(3px, 1vw, 10px);
 }
 
 

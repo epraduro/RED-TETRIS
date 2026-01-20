@@ -18,7 +18,7 @@ function App() {   // devrait afficher 127.0.0.1
             <Route path='/login' element={<Login/>} />
             <Route path='/games/:gameName/:playerName' element={<Game/>} />
             <Route path="/grid" element={<Grid/>} />
-            <Route path="/profile" element={<Profile/>}/>
+            <Route path="/profile/:playerName" element={<Profile/>}/>
           </Routes>
       </Router>
       <ToastContainer/>

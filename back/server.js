@@ -1,14 +1,16 @@
-import { addUser, getUser, addToken, deleteToken, verifyToken } from "./db.js";
+import { addUser, getUser, addToken, deleteToken, verifyToken, saveGame, getUserGames } from "./db.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import http from 'http';
+import http, { get } from 'http';
 import { WebSocketServer } from 'ws';
 import { Player } from './Player.js';
 import { Game } from "./Game.js";
 import { games, getGameValue } from "./game/GameManagment.js";
+import dotenv  from 'dotenv'
 
+dotenv.config()
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ noServer: true });
@@ -16,6 +18,7 @@ const wss = new WebSocketServer({ noServer: true });
 
 // import { pieces, piecesColors } from "./Pieces.js";
 import { removePlayer } from "./game/PlayerManagment.js";
+import { type } from "os";
 
 // Middleware
 app.use(cors({ origin: "*" }));
@@ -64,10 +67,15 @@ app.post("/api/register", async (req, res) => {
 
     // Ajouter l'utilisateur
     const user = await addUser(name, hashedPassword);
+    console.log("USER:", user);
+
+    if (user === null) {
+      return res.status(200).json({ error: "This username is already taken." });
+    }
 
     // Générer le token JWT
     const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "7h",
     });
 
     // Mettre à jour le token dans la base
@@ -75,17 +83,17 @@ app.post("/api/register", async (req, res) => {
 
     // Renvoyer le token et une indication pour le frontend
     res.status(201).json({
-      message: "Utilisateur enregistré avec succès",
+      message: "User registered successfully",
       user: { id: user.id, name: user.name },
       token,
-      redirect: "/home", // Pour React Router
+      redirect: "/home", // For React Router
     });
   } catch (error) {
     if (error.message.includes("UNIQUE constraint failed")) {
-      return res.status(400).json({ error: "Ce nom est déjà utilisé." });
+      return res.status(400).json({ error: "This username is already taken." });
     }
-    console.error("Erreur serveur:", error);
-    res.status(500).json({ error: "Erreur serveur lors de l'enregistrement." });
+    console.error("Server error:", error);
+    res.status(500).json({ error: "Server error during registration." });
   }
 });
 
@@ -113,15 +121,15 @@ app.post("/api/login", async (req, res) => {
       if (user.token === null)
       {
         const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, {
-          expiresIn: "1h",
+          expiresIn: "7h",
         });
 
         await addToken(token, user.name);
 
         return res.status(201).json({
-          message: "The player is successfully connected2",
+          message: "The player is successfully connected",
           user: { id: user.id, name: user.name},
-          token
+          token 
         });
       } else {
         await verifyToken(user, JWT_SECRET);
@@ -134,7 +142,7 @@ app.post("/api/login", async (req, res) => {
       }
     }
   } else {
-    return res.json({ error: "An error has uncurred" });
+    return res.json({ error: "You don't have an account yet, please register." });
   }
 });
 
@@ -159,20 +167,29 @@ app.post('/games/:room/:player_name', async (req, res) => {
         }
         res.status(201).json({ ...game.room, player_name });
     } catch (error) {
-        res.status(500).json({ error: `Erreur serveur : ${error.message}` });
+        res.status(500).json({ error: `Error server: ${error.message}` });
     }
 });
 
+app.get('/api/allgames', authenticateToken, (req, res) => {
+  try {
+    const gamesArray = Array.from(games);
+    // console.log("Games envoyées :", gamesArray);
+    res.json(gamesArray);
+  } catch (error) {
+    res.status(500).json({ error: `Error server: ${error.message}` });
+  }
+});
 
 server.on('upgrade', async (request, socket, head) => {
-  const host = request.headers['host'] || `10.18.198.45:4000`;
+  const host = request.headers['host'] || `${process.env.HOST}:${process.env.PORT}`;
   const url = new URL(request.url, `http://${host}`);
   const parts = url.pathname.split('/');
   let players = [];
 
   if (parts.length !== 4 || parts[1] !== 'games')
   {
-    // console.log('URL invalide:', url.pathname);
+    // console.log('Invalid URL:', url.pathname);
     socket.destroy();
     return;
   }
@@ -188,7 +205,7 @@ server.on('upgrade', async (request, socket, head) => {
   const game = getGameValue(gameName);
   if (!game) 
   {
-    // console.log('Partie inexistante');
+    // console.log('Game does not exist');
     socket.destroy();
     return;
   }
@@ -235,7 +252,7 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   game.players.push(player);
 
   // console.log(`Client connecté au jeu: ${game.name}. Total: ${game.players.length}`);
-  ws.send(JSON.stringify({ type: 'connected', message: 'Bienvenue !', owner: `${game.owner}` }));
+  ws.send(JSON.stringify({ type: 'connected', message: 'Welcome!', owner: `${game.owner}` }));
 
   ws.on('message', async (data) => {
     const msg = JSON.parse(data);
@@ -263,7 +280,6 @@ wss.on('connection', (ws, request, players, game, playerName) => {
 
   ws.on('close', () => {
     game = getGameValue(game.name);
-    // console.log('CLOSE DÉCLENCHÉ !');
 
     game.players = removePlayer(players, playerName);
     // console.log(`Client déconnecté du jeu: ${game.name}. Restants: ${game.players.length}`);
@@ -281,7 +297,43 @@ wss.on('connection', (ws, request, players, game, playerName) => {
   });
 });
 
-const PORT = 4000;
+app.post('/api/savegame', authenticateToken, async (req, res) => {
+  const { name, score, gameName } = req.body;
+
+  let user_id = (await getUser(name)).id;
+
+  if (!user_id || !score) {
+    return res.status(400).json({ error: 'Missing user_id or score' });
+  }
+
+  try {
+    await saveGame(user_id, score, gameName);
+    res.status(201).json({ message: 'Game saved successfully' });
+  } catch (error) {
+    console.error('Error saving game:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.get('/api/getgames', authenticateToken, async (req, res) => {
+  const { name } = req.query;
+
+  console.log("Fetching games for user:", name);
+
+  const user = await getUser(name);
+
+  if (!user?.id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+  const games = await getUserGames(user?.id);
+
+  if (!games) {
+    return res.status(400).json({ error: 'No games found for this user' });
+  }
+  res.status(200).json({ games });
+});
+
+const PORT = process.env.PORT
 server.listen(PORT, () => {
-  console.log(`Server start at http://10.18.198.45:${PORT}`);
+  console.log(`Server start at http://${process.env.HOST}:${PORT}`);
 });
