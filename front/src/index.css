@@ -4,8 +4,8 @@
 @import url(https://fonts.googleapis.com/css2?family=Caesar+Dressing&display=swap);
 
 html {
-  height: 100%;
-  background-color: gray;
+  /* height: 100%; */
+  background-color: #8b5cf6;
 }
 
 body {
@@ -49,7 +49,7 @@ code {
 }
 
 .G {
-  background-color: rgb(93, 93, 94);
+  background-color: rgb(121, 22, 22);
   box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;
 }
 

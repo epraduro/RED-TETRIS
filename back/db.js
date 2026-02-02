@@ -16,7 +16,8 @@ db.serialize(() => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
-    token TEXT
+    token TEXT,
+    mode TEXT DEFAULT 'normalMode'
   )`);
 
   // Table pour sauvegarder l'historique des parties
@@ -25,14 +26,15 @@ db.serialize(() => {
     name TEXT NOT NULL,
     user_id INTEGER NOT NULL,
     score INTEGER NOT NULL,
+    userName TEXT NOT NULL,
     date DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`);
 });
 
-export async function addUser(name, password) {
+export async function addUser(name, password, mode = 'normalMode') {
   return new Promise((resolve, reject) => {
-    db.run(`INSERT INTO users (name, password) VALUES (?, ?)`, [name, password], function (err) {
+    db.run(`INSERT INTO users (name, password, mode) VALUES (?, ?, ?)`, [name, password, mode], function (err) {
       if (err) {
         resolve(null)
       } else {
@@ -51,11 +53,23 @@ export async function addUser(name, password) {
 
 export async function getUser(name) {
   return new Promise((resolve, reject) => {
-    db.get(`SELECT id, name, password, token FROM users WHERE name=?`, [name], (err, row) => {
+    db.get(`SELECT id, name, password, token, mode FROM users WHERE name=?`, [name], (err, row) => {
       if (err) {
         resolve(null)
       } else {
         resolve(row)
+      }
+    });
+  })
+}
+
+export async function updateUserMode(name, mode) {
+  return new Promise((resolve, reject) => {
+    db.run(`UPDATE users SET mode = ? WHERE name = ?`, [mode, name], function (err) {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(this.changes)
       }
     });
   })
@@ -67,9 +81,9 @@ export async function verifyToken(user, secret) {
       if (err) {
         if (err.name === "TokenExpiredError") {
           await deleteToken(user.name)
-          
+          await updateUserMode(user.name, 'normalMode');
           const token = jwt.sign({ name: user.name, id: user.id }, secret, {
-            expiresIn: "1h",
+            expiresIn: "7h",
           });
 
           await addToken(token, user.name);
@@ -82,11 +96,11 @@ export async function verifyToken(user, secret) {
 
 export async function deleteToken(name) {
   return new Promise((resolve, reject) => {
-    db.get(`DELETE token FROM users WHERE name=?`, [name], (err, row) => {
+    db.run(`UPDATE users SET token = NULL WHERE name = ?`, [name], function (err) {
       if (err) {
-        resolve(null)
+        reject(err)
       } else {
-        resolve(row)
+        resolve(this.changes)
       }
     });
   })
@@ -106,9 +120,9 @@ export async function addToken(token, name) {
   })
 }
 
-export async function saveGame(userId, score, name) {
+export async function saveGame(userId, score, name, userName) {
   return new Promise((resolve, reject) => {
-    db.run(`INSERT INTO games (user_id, score, name) VALUES (?, ?, ?)`, [userId, score, name], function (err) {
+    db.run(`INSERT INTO games (user_id, score, name, userName, date) VALUES (?, ?, ?, ?, datetime('now', 'localtime'))`, [userId, score, name, userName], function (err) {
       if (err) {
         resolve(null)
       } else {

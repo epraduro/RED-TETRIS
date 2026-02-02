@@ -24,8 +24,6 @@ const Login = () => {
     e.preventDefault();
     setErrors('');
 
-    console.log(process.env.REACT_APP_HOST, process.env.REACT_APP_PORT);
-
     const response = await axios.post(`http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/login`, {
       name,
       password,
@@ -34,7 +32,6 @@ const Login = () => {
       showToast("error", response.data.error)
     } else {
       localStorage.setItem('token', response.data.token);
-      showToast("success", response.data.message)
       navigate("/home");
     }
   };

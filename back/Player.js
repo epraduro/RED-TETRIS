@@ -58,12 +58,14 @@ export class Player {
 
   score = 0;
 
-  constructor(name, ws, rand = undefined) {
+  constructor(name, ws, rand = undefined, mode) {
     this.name = name;
     this.ws = ws
     this.rand = rand ?? Math.random
+    this.mode = mode;
     this.newPiece()
   }
+
 
   getNewBag() {
     const newArray = Array.from(Player.DEFAULT_BAG);
@@ -101,15 +103,14 @@ export class Player {
     }
   };
 
-  draw() {
+  draw(color = undefined) {
     let x = 0
     for (const row of this.currentPiece?.shape) {
       if (row.every(v => v === 0)) continue
       let y = 0
       for (const c of row) {
         if (c !== 0) {
-          this.grid[this.currentPiece.x + x][this.currentPiece.y + y] =
-            this.currentPiece.color;
+          this.grid[this.currentPiece.x + x][this.currentPiece.y + y] = color ?? this.currentPiece.color;
         }
         y++
       }
@@ -118,6 +119,7 @@ export class Player {
   };
 
   next() {
+    if (this.lose) return false;
     this.movePiece(1, 0)
     return !this.lose
   }
@@ -130,7 +132,7 @@ export class Player {
     } else {
       this.newPiece();
     }
-    // this.update();
+    this.update();
   }
 
   movePiece(x, y) {
@@ -140,7 +142,7 @@ export class Player {
       if (!collide) {
         this.currentPiece.x = this.currentPiece.x + x;
         this.currentPiece.y = this.currentPiece.y + y;
-        this.draw()
+        this.draw(this.mode === 'ghostMode' ? 'E' : undefined)
       } else {
         if (x >= 1) {
           this.draw();
@@ -148,13 +150,14 @@ export class Player {
           return !collide
         }
       }
-      this.draw()
+      this.draw(this.mode === 'ghostMode' ? 'E' : undefined)
       this.update()
       return !collide
     }
     return false;
   };
 
+  
   spacebar() {
     if (this.currentPiece && !this.lose) {
       this.undraw(); 

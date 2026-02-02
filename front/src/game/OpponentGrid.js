@@ -14,9 +14,12 @@ function OpponentGrid({ grid, playerName }) {
             grid[j][i] = "G";
             colored = true;
           }
-          if (colored) grid[j][i] = "G";
+          if (colored) { 
+            grid[j][i] = "G";
+          }
         }
       }
+      return "G";
     }
   };
 

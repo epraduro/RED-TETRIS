@@ -1,5 +1,4 @@
-function Grid({ grid, playerBag }) {
-  // console.log("grid:", grid);
+function Grid({ grid, playerBag, mode }) {
 
   const getClass = (cell) => {
     if (cell === 0) {
@@ -7,7 +6,7 @@ function Grid({ grid, playerBag }) {
     } else if (cell === 2) {
       return "B";
     } else {
-      return cell;
+        return cell;
     }
   };
 
@@ -31,8 +30,8 @@ function Grid({ grid, playerBag }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: `repeat(${grid[0].length}, var(--cell-main)  )`,
-            gridTemplateRows: `repeat(${grid.length}, var(--cell-main) )`,
+            gridTemplateColumns: `repeat(${grid[0].length}, var(--cell-main))`,
+            gridTemplateRows: `repeat(${grid.length}, var(--cell-main))`,
           }}
         >
           {grid.map((row, rowIndex) =>

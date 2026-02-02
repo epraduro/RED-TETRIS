@@ -1,5 +1,9 @@
+
 export class Game {
-  constructor(id, name, owner, status) {
+
+  loser = 0;
+
+  constructor(id, name, owner, status, mode) {
     this.id = id;
     this.name = name;
     this.players = [];
@@ -7,9 +11,8 @@ export class Game {
     this.status = status;
     this.loop = null;
     this.starting = false;
-    this.loser = 0;
+    this.mode = mode;
     this.seed = new Date().getTime();
-    this.playerFailed = [];
   }
 
   createRand() {
@@ -25,11 +28,9 @@ export class Game {
 
   update() {
     if (this.starting) {
-      this.players.forEach((player) => {
+      for (const player of this.players) {
         if (player.currentPiece !== null && player.lose !== true) {
-          if (!player.next()) {
-            this.loser++;
-          }
+          if (!player.next()) continue;
           if (player.bonus > 1) {
             this.players.forEach((p) => {
               if (p.name !== player.name) {
@@ -40,22 +41,15 @@ export class Game {
             });
             player.bonus = 0;
           }
-        } else if (
-          player.currentPiece !== null &&
-          player.lose === true //&& this.players.length < 3
-        ) {
-          if (!this.playerFailed.includes(player.name)) {
-            this.playerFailed.push(player.name);
-            this.loser++;
-          }
         }
-      });
+      }
       if (this.players.length === 1) {
-        if (this.loser === 1) {
+        if (this.players[0].lose) {
           this.finish();
         }
       } else {
-        if (this.loser === this.players.length - 1 || this.loser === this.players.length) {
+        const losers = this.players.filter((p) => p.lose);
+        if (losers.length === this.players.length - 1) {
           this.finish();
         }
       }
@@ -75,9 +69,13 @@ export class Game {
         })
     );
     return {
+      id: this.id,
+      name: this.name,
+      playerCount: this.players.length,
       players,
       status: this.status,
       owner: this.owner,
+      mode: this.mode,
     };
   }
 
@@ -90,12 +88,21 @@ export class Game {
     });
   }
 
+  iscrazyMode() {
+    if (this.mode === 'crazyMode') {
+      return true;
+    }
+    return false;
+  }
+
   start() {
+    console.log("-------------------------------");
     this.starting = true;
+    this.playerFailed = [];
     this.loop = setInterval(() => {
       this.update();
       this.broadcast("update", { data: this.forSend() });
-    }, 1500);  //200
+    }, this.iscrazyMode() ? 100 : 600);
   }
 
   finish() {

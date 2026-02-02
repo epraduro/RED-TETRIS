@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { showToast } from "../Toasts";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Grid from "./Grid";
 import OpponentGrid from "./OpponentGrid";
 
@@ -15,13 +15,35 @@ function Game() {
   const wsRef = useRef(null);
   const navigate = useNavigate();
   const [score, setScore] = useState(0);
+  let keyPressedDownTime = null;
+  let keyPressedSpaceTime = null;
+
+  const { state } = useLocation();
+
+  const normalMode = state?.normalMode
+  const ghostMode = state?.ghostMode
+  const crazyMode = state?.crazyMode
 
   const createGame = async () => {
     try {
-      const reponse = await axios.post(
-        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
+      // const reponse = await axios.post(
+      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
+      // );
+      const response = await fetch(
+        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            normalMode,
+            ghostMode,
+            crazyMode
+          }),
+        }
       );
-      if (reponse.status === 201) console.log("game created.");
+      if (response.status === 201) console.log("game created.");
     } catch {
       showToast("error", "An error has occured!");
     }
@@ -48,33 +70,11 @@ function Game() {
             setGameStatus("started");
             setMessage(data.message);
             setDataGame(data.data);
+            keyPressedDownTime = new Date().getTime();
+            keyPressedSpaceTime = new Date().getTime();
           } else if (data.type === "update") {
             setScore(data.data.players[playerName].score);
             setDataGame(data.data);
-            
-            // if (
-            //   data.data?.players[playerName]?.lose &&
-            //   !dataGame?.players[playerName]?.lose
-            // ) {
-            //   try {
-            //     await axios.post(
-            //       `http://10.18.198.45:4000/api/savegame`,
-            //       {
-            //         name: playerName,
-            //         score: data.data.players[playerName].score || 0,
-            //         gameName: gameName,
-            //       },
-            //       {
-            //         headers: {
-            //           Authorization: `Bearer ${localStorage.getItem("token")}`,
-            //         },
-            //       }
-            //     );
-            //     console.log("Game saved successfully when player lost");
-            //   } catch (error) {
-            //     console.error("Failed to save game:", error);
-            //   }
-            // }
           } else if (data.type === "error") {
             setMessage(data.message);
             showToast("error", data.message);
@@ -93,10 +93,6 @@ function Game() {
               };
             });
           } else if (data.type === "finished") {
-            // if (
-            //   data.data?.players[playerName]?.lose &&
-            //   !dataGame?.players[playerName]?.lose
-            // ) {
               try {
                 await axios.post(
                   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/savegame`,
@@ -166,11 +162,20 @@ function Game() {
     } else if (e.code === "ArrowLeft") {
       movePiece(0, -1);
     } else if (e.code === "ArrowDown") {
-      movePiece(1, 0);
+      // console.log("keyPressed:", keyPressedDownTime);
+      if (Date.now() - keyPressedDownTime > 150) {
+        movePiece(1, 0);
+        keyPressedDownTime = Date.now();
+        // console.log("Moved down at:", keyPressedDownTime);
+      }
     } else if (e.code === "ArrowUp") {
       rotate();
     } else if (e.code === "Space") {
-      spacebar();
+      if (Date.now() - keyPressedSpaceTime > 150) {
+        spacebar();
+        keyPressedSpaceTime = Date.now();
+        // console.log("Spacebar pressed at:", keyPressedSpaceTime);
+      }
     }
   };
 
@@ -273,6 +278,7 @@ function Game() {
                     main={true}
                     grid={dataGame.players[playerName].grid}
                     playerBag={dataGame.players[playerName].bag}
+                    mode={normalMode ? 'normalMode' : ghostMode ? 'ghostMode' : crazyMode ? 'crazyMode' : 'normalMode'}
                   />
 
                   {/* GAME OVER OVERLAY */}
