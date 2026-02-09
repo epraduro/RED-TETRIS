@@ -58,12 +58,12 @@ export class Player {
 
   score = 0;
 
-  constructor(name, ws, rand = undefined, mode) {
+  constructor(name, socket, rand = undefined, mode) {
     this.name = name;
-    this.ws = ws
-    this.rand = rand ?? Math.random
+    this.socket = socket;
+    this.rand = rand ?? Math.random;
     this.mode = mode;
-    this.newPiece()
+    this.newPiece();
   }
 
 
@@ -229,12 +229,16 @@ export class Player {
     this.draw()
   }
 
-  async update() {
-    await this.ws.send(JSON.stringify({type: 'updateMove', data: {
-      grid: this.grid,
-      bag: this.bag,
-      lose: this.lose,
-    }}))
+  update() {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit("updateMove", {
+        data: {
+          grid: this.grid,
+          bag: this.bag,
+          lose: this.lose,
+        },
+      });
+    }
   }
 
   drawRotatedPiece() {

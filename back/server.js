@@ -4,21 +4,35 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import http from "http";
-import { WebSocketServer } from "ws";
+import { Server } from "socket.io";
 import { Player } from "./Player.js";
 import { Game } from "./Game.js";
 import { games, getGameValue } from "./game/GameManagment.js";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocketServer({ noServer: true });
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 import { removePlayer } from "./game/PlayerManagment.js";
 
 // Middleware
 app.use(cors({ origin: "*" }));
 app.use(express.json());
+
+// Servir les fichiers statiques du front-end
+app.use(express.static(path.join(__dirname, "../front/build")));
 
 const JWT_SECRET = "71dac283b6f89a9e6251c597c3f5e3c0";
 
@@ -197,108 +211,80 @@ app.get("/api/allgames", authenticateToken, (req, res) => {
   }
 });
 
-server.on("upgrade", async (request, socket, head) => {
-  const host =
-    request.headers["host"] || `${process.env.HOST}:${process.env.PORT}`;
-  const url = new URL(request.url, `http://${host}`);
-  const parts = url.pathname.split("/");
-  let players = [];
-
-  if (parts.length !== 4 || parts[1] !== "games") {
-    socket.destroy();
+// Socket.IO connection handling
+io.on("connection", (socket) => {
+  const { gameName, playerName } = socket.handshake.query;
+  
+  if (!gameName || !playerName) {
+    socket.emit("error", { message: "Missing gameName or playerName" });
+    socket.disconnect();
     return;
   }
 
-  const gameName = parts[2];
-  const playerName = parts[3];
-
-  if (!gameName || !url.pathname.startsWith("/games/")) {
-    socket.destroy();
-    return;
-  }
   const game = getGameValue(gameName);
   if (!game) {
-    socket.destroy();
+    socket.emit("error", { message: "Game not found!" });
+    socket.disconnect();
     return;
   }
 
-  if (!game.id) {
-    socket.destroy();
-    return;
-  }
-
-  wss.handleUpgrade(request, socket, head, (ws) => {
-    wss.emit("connection", ws, request, players, game, playerName);
-  });
-});
-
-wss.on("connection", (ws, request, players, game, playerName) => {
   const status = game.status;
   if (status === "started") {
-    ws.send(
-      JSON.stringify({ type: "error", message: "Game has already started!" })
-    );
-    ws.close(1008);
-    return;
-  }
-  players = game.players;
-  const existing = [...players].find((p) => p.name === playerName);
-  if (existing) {
-    ws.send(
-      JSON.stringify({
-        type: "error",
-        message: "Player already connected to this game!",
-      })
-    );
-    ws.close(1008);
+    socket.emit("error", { message: "Game has already started!" });
+    socket.disconnect();
     return;
   }
 
-  let player = new Player(playerName, ws, game.createRand(), game.mode);
+  const existing = game.players.find((p) => p.name === playerName);
+  if (existing) {
+    socket.emit("error", { message: "Player already connected to this game!" });
+    socket.disconnect();
+    return;
+  }
+
+  const player = new Player(playerName, socket, game.createRand(), game.mode);
   game.players.push(player);
 
-  ws.send(
-    JSON.stringify({
-      type: "connected",
-      message: "Welcome!",
-      owner: `${game.owner}`,
-    })
-  );
-
-  ws.on("message", async (data) => {
-    const msg = JSON.parse(data);
-
-    if (msg.type === "startGame") {
-      game.status = "started";
-      game.broadcast("started", { data: game.forSend() });
-      game.start();
-    }
-    if (msg.type === "move") {
-      if (game.status !== "finished") player.movePiece(msg.x, msg.y);
-    }
-    if (msg.type === "rotate") {
-      if (game.status !== "finished") player.drawRotatedPiece();
-    }
-    if (msg.type === "restart") {
-      game.restart();
-    }
-    if (msg.type === "spacebar") {
-      player.spacebar();
-    }
+  socket.emit("connected", {
+    message: "Welcome!",
+    owner: game.owner,
   });
 
-  ws.on("close", () => {
-    game = getGameValue(game.name);
+  socket.on("startGame", async () => {
+    game.status = "started";
+    game.broadcast("started", { data: game.forSend() });
+    game.start();
+  });
 
-    game.players = removePlayer(players, playerName);
+  socket.on("move", (data) => {
+    if (game.status !== "finished") player.movePiece(data.x, data.y);
+  });
 
-    if (game.players.length > 0 && game.players[0]) {
-      game.owner = game.players[0].name;
-      game.broadcast("owner", { message: `${game.owner}` });
+  socket.on("rotate", () => {
+    if (game.status !== "finished") player.drawRotatedPiece();
+  });
+
+  socket.on("restart", () => {
+    game.restart();
+  });
+
+  socket.on("spacebar", () => {
+    player.spacebar();
+  });
+
+  socket.on("disconnect", () => {
+    const currentGame = getGameValue(game.name);
+    if (!currentGame) return;
+
+    currentGame.players = removePlayer(currentGame.players, playerName);
+
+    if (currentGame.players.length > 0 && currentGame.players[0]) {
+      currentGame.owner = currentGame.players[0].name;
+      currentGame.broadcast("owner", { message: currentGame.owner });
     }
 
-    if (game.players.length === 0) {
-      games.delete(game);
+    if (currentGame.players.length === 0) {
+      games.delete(currentGame);
     }
   });
 });
@@ -335,6 +321,11 @@ app.get("/api/getgames", authenticateToken, async (req, res) => {
     return res.status(400).json({ error: "No games found for this user" });
   }
   res.status(200).json({ games });
+});
+
+// Route catch-all pour le SPA (doit être après les routes API)
+app.get(/^\/(?!api|games).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, "../front/build", "index.html"));
 });
 
 const PORT = process.env.PORT;

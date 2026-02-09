@@ -5,6 +5,7 @@ import { showToast } from "../Toasts";
 import { useNavigate, useLocation } from "react-router-dom";
 import Grid from "./Grid";
 import OpponentGrid from "./OpponentGrid";
+import { io } from "socket.io-client";
 
 function Game() {
   const { gameName, playerName } = useParams();
@@ -12,7 +13,7 @@ function Game() {
   const [gameOwner, setGameOwner] = useState("");
   const [, setMessage] = useState("");
   const [dataGame, setDataGame] = useState(null);
-  const wsRef = useRef(null);
+  const socketRef = useRef(null);
   const navigate = useNavigate();
   const [score, setScore] = useState(0);
   let keyPressedDownTime = null;
@@ -52,53 +53,60 @@ function Game() {
   useEffect(() => {
     if (!gameName || !playerName) return;
 
-    if (!wsRef.current) {
+    if (!socketRef.current) {
       createGame().then(() => {
-        const newSocket = new WebSocket(
-          `ws://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
-        );
-        wsRef.current = newSocket;
+        const socket = io(`http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}`, {
+          query: { gameName, playerName }
+        });
+        socketRef.current = socket;
 
-        newSocket.onopen = () => {
-          newSocket.send(JSON.stringify({ type: "join", player: playerName }));
-        };
+        socket.on("connected", (data) => {
+          setGameOwner(data.owner);
+        });
 
-        newSocket.onmessage = async (event) => {
-          const data = JSON.parse(event.data);
-          if (data.type === "connected") setGameOwner(data.owner);
-          else if (data.type === "started") {
-            setGameStatus("started");
-            setMessage(data.message);
-            setDataGame(data.data);
-            keyPressedDownTime = new Date().getTime();
-            keyPressedSpaceTime = new Date().getTime();
-          } else if (data.type === "update") {
-            setScore(data.data.players[playerName].score);
-            setDataGame(data.data);
-          } else if (data.type === "error") {
-            setMessage(data.message);
-            showToast("error", data.message);
-            navigate("/home");
-          } else if (data.type === "owner") {
-            setGameOwner(data.message);
-          } else if (data.type === "updateMove") {
-            setDataGame((prev) => {
-              return {
-                players: {
-                  ...(prev?.players ?? {}),
-                  [playerName]: data.data,
-                },
-                status: prev?.status,
-                owner: prev?.owner,
-              };
-            });
-          } else if (data.type === "finished") {
+        socket.on("started", (data) => {
+          setGameStatus("started");
+          setMessage(data.message);
+          setDataGame(data.data);
+          keyPressedDownTime = new Date().getTime();
+          keyPressedSpaceTime = new Date().getTime();
+        });
+
+        socket.on("update", (data) => {
+          setScore(data.data.players[playerName].score);
+          setDataGame(data.data);
+        });
+
+        socket.on("error", (data) => {
+          setMessage(data.message);
+          showToast("error", data.message);
+          navigate("/home");
+        });
+
+        socket.on("owner", (data) => {
+          setGameOwner(data.message);
+        });
+
+        socket.on("updateMove", (data) => {
+          setDataGame((prev) => {
+            return {
+              players: {
+                ...(prev?.players ?? {}),
+                [playerName]: data.data,
+              },
+              status: prev?.status,
+              owner: prev?.owner,
+            };
+          });
+        });
+
+        socket.on("finished", async (data) => {
               try {
                 await axios.post(
                   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/savegame`,
                   {
                     name: playerName,
-                    score: data.data.players[playerName].score || 0,
+                    score: data.data.players[playerName]?.score || 0,
                     gameName: gameName,
                   },
                   {
@@ -111,48 +119,46 @@ function Game() {
               } catch (error) {
                 console.error("Failed to save game:", error);
               }
-            // }
             setGameStatus("finished");
             setDataGame(data.data);
-          } else if (data.type === "waiting") {
-            setGameStatus("waiting");
-            setDataGame(data.data);
-          }
-        };
+        });
 
-        newSocket.onclose = () => {};
+        socket.on("waiting", (data) => {
+          setGameStatus("waiting");
+          setDataGame(data.data);
+        });
       });
     }
 
     return () => {
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
-        wsRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, []);
 
   const startGame = () => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: "startGame" }));
+    if (socketRef.current?.connected) {
+      socketRef.current.emit("startGame");
     }
   };
 
   const movePiece = (x, y) => {
-    wsRef.current.send(JSON.stringify({ type: "move", x, y }));
+    socketRef.current.emit("move", { x, y });
   };
 
   const rotate = (z = 1) => {
-    wsRef.current.send(JSON.stringify({ type: "rotate", z }));
+    socketRef.current.emit("rotate", { z });
   };
 
   const restart = async () => {
     console.log("restart clicked");
-    wsRef.current.send(JSON.stringify({ type: "restart" }));
+    socketRef.current.emit("restart");
   };
 
   const spacebar = () => {
-    wsRef.current.send(JSON.stringify({ type: "spacebar" }));
+    socketRef.current.emit("spacebar");
   };
 
   const keydown = (e) => {

@@ -82,8 +82,8 @@ export class Game {
   broadcast(type, payload) {
     const { message, data } = payload;
     this.players.forEach((player) => {
-      if (player.ws.readyState === WebSocket.OPEN) {
-        player.ws.send(JSON.stringify({ type, message, data }));
+      if (player.socket && player.socket.connected) {
+        player.socket.emit(type, { message, data });
       }
     });
   }
