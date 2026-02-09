@@ -1,6 +1,6 @@
 
 const config = {
-  testEnvironment: "node",
+  testEnvironment: 'node',
   clearMocks: true,
   collectCoverage: true,
   coverageDirectory: "coverage"

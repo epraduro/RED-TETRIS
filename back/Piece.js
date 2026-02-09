@@ -55,17 +55,4 @@ export class Piece {
     }
     return rotated
   }
-
-  // movePiece = (x, y) => {
-  //   if (this.shape) {
-  //     if (!collaps(x, y)) {
-  //       undraw();
-  //       this.shape.x = this.shape.x + x;
-  //       this.shape.y = this.shape.y + y;
-  //       draw();
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }
 }

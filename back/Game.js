@@ -9,7 +9,7 @@ export class Game {
     this.players = [];
     this.owner = owner;
     this.status = status;
-    this.loop = null;
+    this.loop = null; 
     this.starting = false;
     this.mode = mode;
     this.seed = new Date().getTime();
@@ -102,7 +102,7 @@ export class Game {
     this.loop = setInterval(() => {
       this.update();
       this.broadcast("update", { data: this.forSend() });
-    }, this.iscrazyMode() ? 100 : 600);
+    }, this.iscrazyMode() ? 100 : 900);
   }
 
   finish() {

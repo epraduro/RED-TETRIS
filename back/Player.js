@@ -2,6 +2,7 @@ import { Piece } from './Piece.js'
 
 export class Player {
   static DEFAULT_BAG = ["J", "L", "O", "T", "S", "Z", "I"];
+  // static DEFAULT_BAG = ["I", "I", "I", "I", "I", "I", "I"];
 
   currentPiece = null;
   bag = [];
