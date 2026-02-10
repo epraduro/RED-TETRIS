@@ -3,7 +3,8 @@ const config = {
   testEnvironment: 'node',
   clearMocks: true,
   collectCoverage: true,
-  coverageDirectory: "coverage"
+  coverageDirectory: "coverage",
+  coverageReporters: ['text']
 };
 
 export default config;

@@ -17,7 +17,7 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+export const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -36,7 +36,7 @@ app.use(express.static(path.join(__dirname, "../front/build")));
 
 const JWT_SECRET = "71dac283b6f89a9e6251c597c3f5e3c0";
 
-const authenticateToken = (req, res, next) => {
+export const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 

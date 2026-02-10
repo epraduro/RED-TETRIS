@@ -28,6 +28,7 @@ const Login = () => {
       name,
       password,
     });
+
     if (response.data.error) {
       showToast("error", response.data.error)
     } else {

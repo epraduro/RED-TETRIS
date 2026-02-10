@@ -96,7 +96,6 @@ export class Game {
   }
 
   start() {
-    console.log("-------------------------------");
     this.starting = true;
     this.playerFailed = [];
     this.loop = setInterval(() => {
