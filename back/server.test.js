@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { app, authenticateToken } from "./server.js";
 
 import axios from "axios";
+import { io as ioClient } from "socket.io-client";
 
 jest.unstable_mockModule("./db.js", () => ({
   addUser: jest.fn(),
@@ -795,6 +796,270 @@ describe("Server API Tests", () => {
 	  } catch (error) {
 		expect(error.response.status).toBe(400);
 	  }
+	});
+  });
+
+  describe("Socket.IO Tests", () => {
+	let clientSocket;
+	const socketURL = `http://${process.env.HOST}:${process.env.PORT}`;
+
+	beforeEach((done) => {
+	  // Créer une partie pour les tests
+	  const apiNoAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: { "Content-Type": "application/json" },
+	  });
+
+	  apiNoAuth.post("/games/testroom/testplayer", {
+		normalMode: true,
+		ghostMode: false,
+		crazyMode: false
+	  }).then(() => {
+		done();
+	  }).catch(() => {
+		done();
+	  });
+	});
+
+	afterEach(() => {
+	  if (clientSocket && clientSocket.connected) {
+		clientSocket.disconnect();
+	  }
+	});
+
+	test("should connect to socket with valid parameters", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "socketplayer1"
+		}
+	  });
+
+	  clientSocket.on("connected", (data) => {
+		expect(data).toHaveProperty("message", "Welcome!");
+		expect(data).toHaveProperty("owner");
+		clientSocket.disconnect();
+		done();
+	  });
+
+	  clientSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
+	});
+
+	test("should reject connection without gameName", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  playerName: "socketplayer2"
+		}
+	  });
+
+	  clientSocket.on("error", (data) => {
+		expect(data).toHaveProperty("message", "Missing gameName or playerName");
+		done();
+	  });
+
+	  clientSocket.on("connected", () => {
+		done(new Error("Should not connect without gameName"));
+	  });
+
+	  setTimeout(() => {
+		if (!clientSocket.connected) {
+		  done();
+		}
+	  }, 1000);
+	});
+
+	test("should reject connection without playerName", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom"
+		}
+	  });
+
+	  clientSocket.on("error", (data) => {
+		expect(data).toHaveProperty("message", "Missing gameName or playerName");
+		done();
+	  });
+
+	  clientSocket.on("connected", () => {
+		done(new Error("Should not connect without playerName"));
+	  });
+
+	  setTimeout(() => {
+		if (!clientSocket.connected) {
+		  done();
+		}
+	  }, 1000);
+	});
+
+	test("should reject connection to non-existent game", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "nonexistentgame",
+		  playerName: "socketplayer3"
+		}
+	  });
+
+	  clientSocket.on("error", (data) => {
+		expect(data).toHaveProperty("message", "Game not found!");
+		done();
+	  });
+
+	  clientSocket.on("connected", () => {
+		done(new Error("Should not connect to non-existent game"));
+	  });
+
+	  setTimeout(() => {
+		if (!clientSocket.connected) {
+		  done();
+		}
+	  }, 1000);
+	});
+
+	test("should handle player disconnect", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "socketplayer4"
+		}
+	  });
+
+	  clientSocket.on("connected", () => {
+		clientSocket.disconnect();
+		setTimeout(() => {
+		  expect(clientSocket.connected).toBe(false);
+		  done();
+		}, 500);
+	  });
+
+	  clientSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
+	});
+
+	test("should emit startGame event", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "testplayer" // Owner of the game
+		}
+	  });
+
+	  clientSocket.on("connected", () => {
+		clientSocket.emit("startGame");
+		setTimeout(() => {
+		  clientSocket.disconnect();
+		  done();
+		}, 500);
+	  });
+
+	  clientSocket.on("started", (data) => {
+		expect(data).toHaveProperty("data");
+		clientSocket.disconnect();
+		done();
+	  });
+
+	  clientSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
+	});
+
+	test("should handle move event", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "socketplayer5"
+		}
+	  });
+
+	  clientSocket.on("connected", () => {
+		clientSocket.emit("move", { x: 1, y: 0 });
+		setTimeout(() => {
+		  clientSocket.disconnect();
+		  done();
+		}, 500);
+	  });
+
+	  clientSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
+	});
+
+	test("should handle rotate event", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "socketplayer6"
+		}
+	  });
+
+	  clientSocket.on("connected", () => {
+		clientSocket.emit("rotate");
+		setTimeout(() => {
+		  clientSocket.disconnect();
+		  done();
+		}, 500);
+	  });
+
+	  clientSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
+	});
+
+	test("should handle spacebar event", (done) => {
+	  clientSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "socketplayer7"
+		}
+	  });
+
+	  clientSocket.on("connected", () => {
+		clientSocket.emit("spacebar");
+		setTimeout(() => {
+		  clientSocket.disconnect();
+		  done();
+		}, 500);
+	  });
+
+	  clientSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
+	});
+
+	test("should reject duplicate player connection", (done) => {
+	  const firstSocket = ioClient(socketURL, {
+		query: {
+		  gameName: "testroom",
+		  playerName: "duplicateplayer"
+		}
+	  });
+
+	  firstSocket.on("connected", () => {
+		// Try to connect with the same player name
+		clientSocket = ioClient(socketURL, {
+		  query: {
+			gameName: "testroom",
+			playerName: "duplicateplayer"
+		  }
+		});
+
+		clientSocket.on("error", (data) => {
+		  expect(data).toHaveProperty("message", "Player already connected to this game!");
+		  firstSocket.disconnect();
+		  done();
+		});
+
+		clientSocket.on("connected", () => {
+		  firstSocket.disconnect();
+		  done(new Error("Should not allow duplicate player"));
+		});
+	  });
+
+	  firstSocket.on("error", (error) => {
+		done(new Error(error.message));
+	  });
 	});
   });
 });
