@@ -165,6 +165,24 @@ app.get("/api/home", authenticateToken, (req, res) => {
   res.json({ message: "Welcome to the home page", user: req.user });
 });
 
+app.post("/api/savegame", authenticateToken, async (req, res) => {
+  const { name, score, gameName } = req.body;
+
+  let user_id = (await getUser(name)).id;
+
+  if (!user_id || score === null) {
+    return res.status(401).json({ error: "Missing user_id or score" });
+  }
+
+  try {
+    await saveGame(user_id, score, gameName, name);
+    res.status(201).json({ message: "Game saved successfully" });
+  } catch (error) {
+    console.error("Error saving game:", error);
+    res.status(500).json({    error: "Internal server error" });
+  }
+});
+
 app.post("/:room/:player_name", async (req, res) => {
   const { room, player_name } = req.params;
 
@@ -287,24 +305,6 @@ io.on("connection", (socket) => {
       games.delete(currentGame);
     }
   });
-});
-
-app.post("/api/savegame", authenticateToken, async (req, res) => {
-  const { name, score, gameName } = req.body;
-
-  let user_id = (await getUser(name)).id;
-
-  if (!user_id || score === null) {
-    return res.status(400).json({ error: "Missing user_id or score" });
-  }
-
-  try {
-    await saveGame(user_id, score, gameName, name);
-    res.status(201).json({ message: "Game saved successfully" });
-  } catch (error) {
-    console.error("Error saving game:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
 });
 
 app.get("/api/getgames", authenticateToken, async (req, res) => {
