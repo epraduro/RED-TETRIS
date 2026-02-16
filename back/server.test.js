@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach, afterEach, jest, afterAll } from "@jest/globals";
+import { describe, expect, test, beforeEach, afterEach, jest, afterAll, beforeAll } from "@jest/globals";
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -40,6 +40,23 @@ describe("Server API Tests", () => {
 
 	let api;
 	let tokenUser;
+
+	beforeAll(async () => {
+	  // Create testplayer user via registration endpoint
+	  const apiNoAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: { "Content-Type": "application/json" },
+	  });
+	  
+	  try {
+		await apiNoAuth.post("/api/register", {
+		  name: "testplayer",
+		  password: "password123"
+		});
+	  } catch (error) {
+		// User might already exist, that's okay
+	  }
+	});
 
   beforeEach(() => {
 	tokenUser = jwt.sign({ name: "testuser", id: 1 }, JWT_SECRET);
@@ -370,9 +387,6 @@ describe("Server API Tests", () => {
 	});
 
 	test("should create a new game with normalMode", async () => {
-	  const mockPlayer = { id: 1, name: "testplayer", mode: "normalMode" };
-	  db.getUser.mockResolvedValue(mockPlayer);
-	  db.updateUserMode.mockResolvedValue({ ...mockPlayer, mode: "normalMode" });
 	  getGameValue.mockReturnValue(null);
 	  
 	  const mockGame = {
@@ -400,9 +414,6 @@ describe("Server API Tests", () => {
 	});
 
 	test("should create a new game with ghostMode", async () => {
-	  const mockPlayer = { id: 1, name: "testplayer", mode: "ghostMode" };
-	  db.getUser.mockResolvedValue(mockPlayer);
-	  db.updateUserMode.mockResolvedValue({ ...mockPlayer, mode: "ghostMode" });
 	  getGameValue.mockReturnValue(null);
 	  
 	  const mockGame = {
@@ -430,9 +441,6 @@ describe("Server API Tests", () => {
 	});
 
 	test("should create a new game with crazyMode", async () => {
-	  const mockPlayer = { id: 1, name: "testplayer", mode: "crazyMode" };
-	  db.getUser.mockResolvedValue(mockPlayer);
-	  db.updateUserMode.mockResolvedValue({ ...mockPlayer, mode: "crazyMode" });
 	  getGameValue.mockReturnValue(null);
 	  
 	  const mockGame = {
@@ -460,7 +468,6 @@ describe("Server API Tests", () => {
 	});
 
 	test("should return existing game if game already exists", async () => {
-	  const mockPlayer = { id: 1, name: "testplayer" };
 	  const existingGame = {
 		id: 1,
 		name: "room1",
@@ -470,7 +477,6 @@ describe("Server API Tests", () => {
 		room: { id: 1, name: "room1" }
 	  };
 	  
-	  db.getUser.mockResolvedValue(mockPlayer);
 	  getGameValue.mockReturnValue(existingGame);
 
 	  const apiNoAuth = axios.create({
@@ -487,8 +493,6 @@ describe("Server API Tests", () => {
 	});
 
 	test("should handle error during game creation", async () => {
-	  db.getUser.mockRejectedValue(new Error("Database error"));
-
 	  const apiNoAuth = axios.create({
 		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
 		headers: { "Content-Type": "application/json" },
@@ -496,12 +500,11 @@ describe("Server API Tests", () => {
 
 	  try {
 		const response = await apiNoAuth
-		  .post("/games/room1/testplayer", 
+		  .post("/games/room1/nonexistentplayer", 
 			  { normalMode: true, ghostMode: false, crazyMode: false });
 	  } catch (error) {
 		expect(error.response.status).toBe(400);
-		expect(error.response.data).toHaveProperty("error");
-		expect(error.response.data.error).toContain("Player not found!");
+		expect(error.response.data).toHaveProperty("error", "Player not found!");
 	  }
 	});
   });
