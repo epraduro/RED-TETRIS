@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { showToast } from "./Toasts";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Home() {
   const [gameName, setGameName] = useState("");
@@ -158,8 +158,8 @@ function Home() {
               </p>
             </div>
             <div className="flex gap-3">
-              <a
-                href={`/profile/${playerName}`}
+              <Link
+                to={`/profile/${playerName}`}
                 className="inline-flex items-center gap-2 text-indigo-200 hover:text-violet-300 transition-colors duration-300 text-lg font-medium group border-2 border-indigo-500/50 hover:border-violet-400/80 px-3 py-2 bg-slate-900/60 backdrop-blur-sm rounded-lg"
               >
                 <svg
@@ -174,7 +174,7 @@ function Home() {
                   />
                 </svg>
                 Voir mon profil
-              </a>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center gap-2 text-red-300 hover:text-red-400 transition-colors duration-300 text-lg font-medium group border-2 border-red-500/50 hover:border-red-400/80 px-3 py-2 bg-slate-900/60 backdrop-blur-sm rounded-lg"
