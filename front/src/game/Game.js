@@ -28,10 +28,10 @@ function Game() {
   const createGame = async () => {
     try {
       // const reponse = await axios.post(
-      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
+      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`
       // );
       const response = await fetch(
-        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`,
+        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`,
         {
           method: 'POST',
           headers: {

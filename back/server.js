@@ -165,7 +165,7 @@ app.get("/api/home", authenticateToken, (req, res) => {
   res.json({ message: "Welcome to the home page", user: req.user });
 });
 
-app.post("/games/:room/:player_name", async (req, res) => {
+app.post("/:room/:player_name", async (req, res) => {
   const { room, player_name } = req.params;
 
   const { normalMode, ghostMode, crazyMode } = req.body;

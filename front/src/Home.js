@@ -21,7 +21,7 @@ function Home() {
 
   const createGame = async () => {
     navigate(
-      `/games/${gameName}/${playerName}`, {
+      `/${gameName}/${playerName}`, {
         state: {
           normalMode,
           ghostMode,
@@ -223,7 +223,7 @@ function Home() {
             <ul className="space-y-3 max-h-64 overflow-y-auto">
               {gameList.map((game, index) => (
                 <li
-                  onClick={() => navigate(`/games/${game.name}/${playerName}`)}
+                  onClick={() => navigate(`/${game.name}/${playerName}`)}
                   key={index}
                   className="bg-gradient-to-r from-indigo-900/60 to-violet-900/60 hover:from-indigo-800/80 hover:to-violet-800/80 p-4 rounded-xl border-2 border-indigo-500/30 hover:border-violet-400/60 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-violet-500/30 transform hover:scale-102"
                 >

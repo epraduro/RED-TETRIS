@@ -16,7 +16,7 @@ function App() {   // devrait afficher 127.0.0.1
             <Route path='/home' element={<Home/>}/>
             <Route path='/register' element={<Register/>} />
             <Route path='/login' element={<Login/>} />
-            <Route path='/games/:gameName/:playerName' element={<Game/>} />
+            <Route path='/:gameName/:playerName' element={<Game/>} />
             <Route path="/grid" element={<Grid/>} />
             <Route path="/profile/:playerName" element={<Profile/>}/>
           </Routes>
