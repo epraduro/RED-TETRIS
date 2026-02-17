@@ -169,7 +169,7 @@ app.post("/api/savegame", authenticateToken, async (req, res) => {
   let user_id = (await getUser(name)).id;
 
   if (!user_id || score === null) {
-    return res.status(401).json({ error: "Missing user_id or score" });
+    return res.status(400).json({ error: "Missing user_id or score" });
   }
 
   try {

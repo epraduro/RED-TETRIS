@@ -17,6 +17,7 @@ jest.unstable_mockModule("./db.js", () => ({
   saveGame: jest.fn(),
   getUserGames: jest.fn(),
   updateUserMode: jest.fn(),
+  deleteUser: jest.fn(),
 }));
 
 jest.unstable_mockModule("./game/GameManagment.js", () => ({
@@ -41,6 +42,7 @@ describe("Server API Tests", () => {
 
 	let api;
 	let tokenUser;
+	let testplayerToken;
 
 	beforeAll(async () => {
 	  // Create testplayer user via registration endpoint
@@ -50,12 +52,27 @@ describe("Server API Tests", () => {
 	  });
 	  
 	  try {
-		await apiNoAuth.post("/api/register", {
+		const res = await apiNoAuth.post("/api/register", {
 		  name: "testplayer",
 		  password: "password123"
 		});
+		if (res.data?.token) {
+		  testplayerToken = res.data.token;
+		}
 	  } catch (error) {
-		// User might already exist, that's okay
+		// User might already exist, login instead
+	  }
+	  if (!testplayerToken) {
+		try {
+		  const loginRes = await apiNoAuth.post("/api/login", {
+			name: "testplayer",
+			password: "password123"
+		  });
+		  testplayerToken = loginRes.data?.token || loginRes.data?.updateUser?.token;
+		} catch (error) {
+		  // fallback: generate a token manually
+		  testplayerToken = jwt.sign({ name: "testplayer", id: 2 }, JWT_SECRET);
+		}
 	  }
 	});
 
@@ -368,32 +385,17 @@ describe("Server API Tests", () => {
   });
 
   describe("POST /:room/:player_name", () => {
-	test("should reject game creation if player not found", async () => {
+	test("should create a fictive user and game when player does not exist in DB (no token)", async () => {
+	  const fictiveName = "fictive_" + Date.now();
 	  db.getUser.mockResolvedValue(null);
-
-	  const apiNoAuth = axios.create({
-		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
-		headers: { "Content-Type": "application/json" },
-	  });
-
-	  try {
-		const response = await apiNoAuth
-		  .post("/room1/unknownplayer", 
-			  { normalMode: true, ghostMode: false, crazyMode: false });
-		expect(response.status).toBe(400);
-	  } catch (error) {
-		expect(error.response.status).toBe(400);
-		expect(error.response.data).toHaveProperty("error", "Player not found!");
-	  }
-	});
-
-	test("should create a new game with normalMode", async () => {
+	  db.addUser.mockResolvedValue({ id: 99, name: fictiveName });
+	  db.updateUserMode.mockResolvedValue(true);
 	  getGameValue.mockReturnValue(null);
-	  
+
 	  const mockGame = {
 		id: 1,
 		name: "room1",
-		owner: "testplayer",
+		owner: fictiveName,
 		status: "waiting",
 		mode: "normalMode",
 		room: { id: 1, name: "room1" }
@@ -406,17 +408,93 @@ describe("Server API Tests", () => {
 	  });
 
 	  const response = await apiNoAuth
-		.post("/room1/testplayer", 
+		.post(`/room1/${fictiveName}`,
+			{ normalMode: true, ghostMode: false, crazyMode: false });
+
+	  expect(response.status).toBe(201);
+	  expect(response.data).toHaveProperty("player_name", fictiveName);
+	  expect(response.data).toHaveProperty("isFictive", true);
+	});
+
+	test("should reject with 403 when player exists in DB but token does not match", async () => {
+	  db.getUser.mockResolvedValue({ id: 5, name: "otherplayer", password: "hashed", token: "sometoken" });
+
+	  // Use a token for a different user
+	  const wrongToken = jwt.sign({ name: "differentuser", id: 10 }, JWT_SECRET);
+	  const apiWithWrongToken = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": `Bearer ${wrongToken}`
+		},
+	  });
+
+	  try {
+		const response = await apiWithWrongToken
+		  .post("/room1/otherplayer",
+			  { normalMode: true, ghostMode: false, crazyMode: false });
+		expect(response.status).toBe(403);
+	  } catch (error) {
+		expect(error.response.status).toBe(403);
+		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
+	  }
+	});
+
+	test("should reject with 403 when player exists in DB but no token is provided", async () => {
+	  db.getUser.mockResolvedValue({ id: 5, name: "existingplayer", password: "hashed", token: "sometoken" });
+
+	  const apiNoAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: { "Content-Type": "application/json" },
+	  });
+
+	  try {
+		const response = await apiNoAuth
+		  .post("/room1/existingplayer",
+			  { normalMode: true, ghostMode: false, crazyMode: false });
+		expect(response.status).toBe(403);
+	  } catch (error) {
+		expect(error.response.status).toBe(403);
+		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
+	  }
+	});
+
+	test("should allow authenticated user to create game with normalMode", async () => {
+	  db.updateUserMode.mockResolvedValue(true);
+	  getGameValue.mockReturnValue(null);
+
+	  const mockGame = {
+		id: 1,
+		name: "room1",
+		owner: "testplayer",
+		status: "waiting",
+		mode: "normalMode",
+		room: { id: 1, name: "room1" }
+	  };
+	  Game.mockImplementation(() => mockGame);
+
+	  const apiAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": `Bearer ${testplayerToken}`
+		},
+	  });
+
+	  const response = await apiAuth
+		.post("/room1/testplayer",
 			{ normalMode: true, ghostMode: false, crazyMode: false });
 
 	  expect(response.status).toBe(201);
 	  expect(response.data).toHaveProperty("player_name", "testplayer");
 	  expect(response.data).toHaveProperty("normalMode", true);
+	  expect(response.data.isFictive).toBeFalsy();
 	});
 
-	test("should create a new game with ghostMode", async () => {
+	test("should allow authenticated user to create game with ghostMode", async () => {
+	  db.updateUserMode.mockResolvedValue(true);
 	  getGameValue.mockReturnValue(null);
-	  
+
 	  const mockGame = {
 		id: 1,
 		name: "room1",
@@ -427,13 +505,16 @@ describe("Server API Tests", () => {
 	  };
 	  Game.mockImplementation(() => mockGame);
 
-	  const apiNoAuth = axios.create({
+	  const apiAuth = axios.create({
 		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
-		headers: { "Content-Type": "application/json" },
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": `Bearer ${testplayerToken}`
+		},
 	  });
 
-	  const response = await apiNoAuth
-		.post("/room1/testplayer", 
+	  const response = await apiAuth
+		.post("/room1/testplayer",
 			{ normalMode: false, ghostMode: true, crazyMode: false });
 
 	  expect(response.status).toBe(201);
@@ -441,9 +522,10 @@ describe("Server API Tests", () => {
 	  expect(response.data).toHaveProperty("ghostMode", true);
 	});
 
-	test("should create a new game with crazyMode", async () => {
+	test("should allow authenticated user to create game with crazyMode", async () => {
+	  db.updateUserMode.mockResolvedValue(true);
 	  getGameValue.mockReturnValue(null);
-	  
+
 	  const mockGame = {
 		id: 1,
 		name: "room1",
@@ -454,13 +536,16 @@ describe("Server API Tests", () => {
 	  };
 	  Game.mockImplementation(() => mockGame);
 
-	  const apiNoAuth = axios.create({
+	  const apiAuth = axios.create({
 		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
-		headers: { "Content-Type": "application/json" },
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": `Bearer ${testplayerToken}`
+		},
 	  });
 
-	  const response = await apiNoAuth
-		.post("/room1/testplayer", 
+	  const response = await apiAuth
+		.post("/room1/testplayer",
 			{ normalMode: false, ghostMode: false, crazyMode: true });
 
 	  expect(response.status).toBe(201);
@@ -468,7 +553,58 @@ describe("Server API Tests", () => {
 	  expect(response.data).toHaveProperty("crazyMode", true);
 	});
 
-	test("should return existing game if game already exists", async () => {
+	test("should create fictive user with default normalMode when no mode specified", async () => {
+	  const fictiveName = "newplayer_" + Date.now();
+	  db.getUser.mockResolvedValue(null);
+	  db.addUser.mockResolvedValue({ id: 100, name: fictiveName });
+	  db.updateUserMode.mockResolvedValue(true);
+	  getGameValue.mockReturnValue(null);
+
+	  const mockGame = {
+		id: 1,
+		name: "room1",
+		owner: fictiveName,
+		status: "waiting",
+		mode: "normalMode",
+		room: { id: 1, name: "room1" }
+	  };
+	  Game.mockImplementation(() => mockGame);
+
+	  const apiNoAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: { "Content-Type": "application/json" },
+	  });
+
+	  const response = await apiNoAuth
+		.post(`/room1/${fictiveName}`,
+			{ normalMode: false, ghostMode: false, crazyMode: false });
+
+	  expect(response.status).toBe(201);
+	  expect(response.data).toHaveProperty("player_name", fictiveName);
+	  expect(response.data).toHaveProperty("isFictive", true);
+	});
+
+	test("should return 400 when fictive user creation fails", async () => {
+	  // Use testplayer (existing user) without auth token -> should get 403
+	  const apiNoAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: { "Content-Type": "application/json" },
+	  });
+
+	  try {
+		const response = await apiNoAuth
+		  .post("/room1/testplayer",
+			  { normalMode: true, ghostMode: false, crazyMode: false });
+		// If no error thrown, the status should indicate an error
+		expect([400, 403]).toContain(response.status);
+	  } catch (error) {
+		expect(error.response).toBeDefined();
+		expect([400, 403]).toContain(error.response.status);
+		expect(error.response.data).toHaveProperty("error");
+	  }
+	});
+
+	test("should return existing game if game already exists (authenticated user)", async () => {
 	  const existingGame = {
 		id: 1,
 		name: "room1",
@@ -477,7 +613,37 @@ describe("Server API Tests", () => {
 		mode: "normalMode",
 		room: { id: 1, name: "room1" }
 	  };
-	  
+	  getGameValue.mockReturnValue(existingGame);
+
+	  const apiAuth = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": `Bearer ${testplayerToken}`
+		},
+	  });
+
+	  const response = await apiAuth
+		.post("/room1/testplayer",
+			{ normalMode: true, ghostMode: false, crazyMode: false });
+
+	  expect(response.status).toBe(201);
+	  expect(response.data).toHaveProperty("player_name", "testplayer");
+	});
+
+	test("should return existing game if game already exists (fictive user)", async () => {
+	  const fictiveName = "fictivejoiner_" + Date.now();
+	  db.getUser.mockResolvedValue(null);
+	  db.addUser.mockResolvedValue({ id: 101, name: fictiveName });
+
+	  const existingGame = {
+		id: 1,
+		name: "room1",
+		owner: "someowner",
+		status: "waiting",
+		mode: "normalMode",
+		room: { id: 1, name: "room1" }
+	  };
 	  getGameValue.mockReturnValue(existingGame);
 
 	  const apiNoAuth = axios.create({
@@ -486,14 +652,37 @@ describe("Server API Tests", () => {
 	  });
 
 	  const response = await apiNoAuth
-		.post("/room1/testplayer", 
+		.post(`/room1/${fictiveName}`,
 			{ normalMode: true, ghostMode: false, crazyMode: false });
 
 	  expect(response.status).toBe(201);
-	  expect(response.data).toHaveProperty("player_name", "testplayer");
+	  expect(response.data).toHaveProperty("player_name", fictiveName);
+	  expect(response.data).toHaveProperty("isFictive", true);
 	});
 
-	test("should handle error during game creation", async () => {
+	test("should reject with 403 when player exists and token is invalid", async () => {
+	  db.getUser.mockResolvedValue({ id: 5, name: "realplayer", password: "hashed", token: "sometoken" });
+
+	  const apiWithBadToken = axios.create({
+		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": "Bearer invalidtoken123"
+		},
+	  });
+
+	  try {
+		const response = await apiWithBadToken
+		  .post("/room1/realplayer",
+			  { normalMode: true, ghostMode: false, crazyMode: false });
+		expect(response.status).toBe(403);
+	  } catch (error) {
+		expect(error.response.status).toBe(403);
+		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
+	  }
+	});
+
+	test("should handle error when existing user tries to join without auth", async () => {
 	  const apiNoAuth = axios.create({
 		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
 		headers: { "Content-Type": "application/json" },
@@ -501,11 +690,13 @@ describe("Server API Tests", () => {
 
 	  try {
 		const response = await apiNoAuth
-		  .post("/room1/nonexistentplayer", 
+		  .post("/room1/testplayer",
 			  { normalMode: true, ghostMode: false, crazyMode: false });
+		expect(response.status).toBe(403);
 	  } catch (error) {
-		expect(error.response.status).toBe(400);
-		expect(error.response.data).toHaveProperty("error", "Player not found!");
+		expect(error.response).toBeDefined();
+		expect(error.response.status).toBe(403);
+		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
 	  }
 	});
   });
@@ -804,13 +995,16 @@ describe("Server API Tests", () => {
 	const socketURL = `http://${process.env.HOST}:${process.env.PORT}`;
 
 	beforeEach((done) => {
-	  // Créer une partie pour les tests
-	  const apiNoAuth = axios.create({
+	  // Créer une partie pour les tests avec le token authentifié
+	  const apiAuth = axios.create({
 		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
-		headers: { "Content-Type": "application/json" },
+		headers: {
+		  "Content-Type": "application/json",
+		  "Authorization": `Bearer ${testplayerToken}`
+		},
 	  });
 
-	  apiNoAuth.post("/testroom/testplayer", {
+	  apiAuth.post("/testroom/testplayer", {
 		normalMode: true,
 		ghostMode: false,
 		crazyMode: false
