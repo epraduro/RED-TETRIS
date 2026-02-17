@@ -168,6 +168,18 @@ export async function getBestScores(limit = 10) {
   })
 }
 
+export async function deleteUser(name) {
+  return new Promise((resolve, reject) => {
+    db.run(`DELETE FROM users WHERE name = ?`, [name], function (err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(this.changes);
+      }
+    });
+  });
+}
+
 export function closeDatabase() {
     db.close()
 }

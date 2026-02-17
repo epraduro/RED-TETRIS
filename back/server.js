@@ -1,4 +1,4 @@
-import { addUser, getUser, addToken, deleteToken, verifyToken, saveGame, getUserGames, updateUserMode } from "./db.js";
+import { addUser, getUser, addToken, deleteToken, verifyToken, saveGame, getUserGames, updateUserMode, deleteUser } from "./db.js";
 import express from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
@@ -190,8 +190,37 @@ app.post("/:room/:player_name", async (req, res) => {
 
   try {
     let player = await getUser(player_name);
-    if (!player) {
-      return res.status(400).json({ error: "Player not found!" });
+    let isFictive = false;
+
+    // Check authorization header to identify the connected user
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+    let connectedUser = null;
+
+    if (token) {
+      try {
+        connectedUser = jwt.verify(token, process.env.JWT_SECRET);
+      } catch (err) {
+        connectedUser = null;
+      }
+    }
+
+    if (player) {
+      // Player exists in DB
+      if (!connectedUser || connectedUser.name !== player_name) {
+        // The player exists but is not the connected user -> error
+        return res.status(403).json({ error: "This username belongs to another registered user. Please use your own username." });
+      }
+      // The player exists and is the connected user -> OK
+    } else {
+      // Player does not exist in DB -> create a fictive user
+      const fictivePassword = "fictive_" + Date.now();
+      const bcryptHash = await bcrypt.hash(fictivePassword, 10);
+      player = await addUser(player_name, bcryptHash);
+      if (!player) {
+        return res.status(400).json({ error: "Failed to create temporary user." });
+      }
+      isFictive = true;
     }
 
     let game = getGameValue(room);
@@ -199,20 +228,23 @@ app.post("/:room/:player_name", async (req, res) => {
       const id =
         games.size > 0 ? Math.max(...[...games].map((g) => g.id)) + 1 : 1;
       if (normalMode === true) {
-        player = await updateUserMode(player_name, "normalMode");
+        await updateUserMode(player_name, "normalMode");
         game = new Game(id, room, player_name, "waiting", "normalMode");
       } else if (ghostMode === true) {
-        player = await updateUserMode(player_name, "ghostMode");
+        await updateUserMode(player_name, "ghostMode");
         game = new Game(id, room, player_name, "waiting", "ghostMode");
       } else if (crazyMode === true) {
-        player = await updateUserMode(player_name, "crazyMode");
+        await updateUserMode(player_name, "crazyMode");
         game = new Game(id, room, player_name, "waiting", "crazyMode");
+      } else {
+        await updateUserMode(player_name, "normalMode");
+        game = new Game(id, room, player_name, "waiting", "normalMode");
       }
       if (game.id) games.add(game);
     }
     res
       .status(201)
-      .json({ ...game.room, player_name, normalMode, ghostMode, crazyMode });
+      .json({ ...game.room, player_name, normalMode, ghostMode, crazyMode, isFictive });
   } catch (error) {
     res.status(500).json({ error: `Error server: ${error.message}` });
   }
@@ -261,6 +293,15 @@ io.on("connection", (socket) => {
   const player = new Player(playerName, socket, game.createRand(), game.mode);
   game.players.push(player);
 
+  // Track if this player is fictive (not in DB with a token)
+  let isFictivePlayer = false;
+  (async () => {
+    const dbUser = await getUser(playerName);
+    if (dbUser && !dbUser.token) {
+      isFictivePlayer = true;
+    }
+  })();
+
   socket.emit("connected", {
     message: "Welcome!",
     owner: game.owner,
@@ -288,7 +329,7 @@ io.on("connection", (socket) => {
     player.spacebar();
   });
 
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     const currentGame = getGameValue(game.name);
     if (!currentGame) return;
 
@@ -301,6 +342,16 @@ io.on("connection", (socket) => {
 
     if (currentGame.players.length === 0) {
       games.delete(currentGame);
+    }
+
+    // Clean up fictive user from DB
+    if (isFictivePlayer) {
+      try {
+        await deleteUser(playerName);
+        console.log(`Fictive user '${playerName}' deleted from DB.`);
+      } catch (err) {
+        console.error(`Error deleting fictive user '${playerName}':`, err);
+      }
     }
   });
 });
@@ -322,7 +373,7 @@ app.get("/api/getgames", authenticateToken, async (req, res) => {
 });
 
 // Route catch-all pour le SPA (doit être après les routes API)
-app.get(/^\/(?!api|games).*/, (req, res) => {
+app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../front/build", "index.html"));
 });
 

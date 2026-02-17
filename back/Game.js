@@ -49,7 +49,7 @@ export class Game {
         }
       } else {
         const losers = this.players.filter((p) => p.lose);
-        if (losers.length === this.players.length - 1) {
+        if (losers.length === this.players.length || losers.length === this.players.length - 1) {
           this.finish();
         }
       }
