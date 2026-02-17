@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { showToast } from "./Toasts";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Home() {
   const [gameName, setGameName] = useState("");
@@ -21,7 +21,7 @@ function Home() {
 
   const createGame = async () => {
     navigate(
-      `/games/${gameName}/${playerName}`, {
+      `/${gameName}/${playerName}`, {
         state: {
           normalMode,
           ghostMode,
@@ -158,8 +158,8 @@ function Home() {
               </p>
             </div>
             <div className="flex gap-3">
-              <a
-                href={`/profile/${playerName}`}
+              <Link
+                to={`/profile/${playerName}`}
                 className="inline-flex items-center gap-2 text-indigo-200 hover:text-violet-300 transition-colors duration-300 text-lg font-medium group border-2 border-indigo-500/50 hover:border-violet-400/80 px-3 py-2 bg-slate-900/60 backdrop-blur-sm rounded-lg"
               >
                 <svg
@@ -174,7 +174,7 @@ function Home() {
                   />
                 </svg>
                 Voir mon profil
-              </a>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center gap-2 text-red-300 hover:text-red-400 transition-colors duration-300 text-lg font-medium group border-2 border-red-500/50 hover:border-red-400/80 px-3 py-2 bg-slate-900/60 backdrop-blur-sm rounded-lg"
@@ -223,7 +223,7 @@ function Home() {
             <ul className="space-y-3 max-h-64 overflow-y-auto">
               {gameList.map((game, index) => (
                 <li
-                  onClick={() => navigate(`/games/${game.name}/${playerName}`)}
+                  onClick={() => navigate(`/${game.name}/${playerName}`)}
                   key={index}
                   className="bg-gradient-to-r from-indigo-900/60 to-violet-900/60 hover:from-indigo-800/80 hover:to-violet-800/80 p-4 rounded-xl border-2 border-indigo-500/30 hover:border-violet-400/60 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-violet-500/30 transform hover:scale-102"
                 >

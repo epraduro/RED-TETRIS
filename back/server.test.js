@@ -367,7 +367,7 @@ describe("Server API Tests", () => {
 	});
   });
 
-  describe("POST /games/:room/:player_name", () => {
+  describe("POST /:room/:player_name", () => {
 	test("should reject game creation if player not found", async () => {
 	  db.getUser.mockResolvedValue(null);
 
@@ -378,7 +378,7 @@ describe("Server API Tests", () => {
 
 	  try {
 		const response = await apiNoAuth
-		  .post("/games/room1/unknownplayer", 
+		  .post("/room1/unknownplayer", 
 			  { normalMode: true, ghostMode: false, crazyMode: false });
 		expect(response.status).toBe(400);
 	  } catch (error) {
@@ -406,7 +406,7 @@ describe("Server API Tests", () => {
 	  });
 
 	  const response = await apiNoAuth
-		.post("/games/room1/testplayer", 
+		.post("/room1/testplayer", 
 			{ normalMode: true, ghostMode: false, crazyMode: false });
 
 	  expect(response.status).toBe(201);
@@ -433,7 +433,7 @@ describe("Server API Tests", () => {
 	  });
 
 	  const response = await apiNoAuth
-		.post("/games/room1/testplayer", 
+		.post("/room1/testplayer", 
 			{ normalMode: false, ghostMode: true, crazyMode: false });
 
 	  expect(response.status).toBe(201);
@@ -460,7 +460,7 @@ describe("Server API Tests", () => {
 	  });
 
 	  const response = await apiNoAuth
-		.post("/games/room1/testplayer", 
+		.post("/room1/testplayer", 
 			{ normalMode: false, ghostMode: false, crazyMode: true });
 
 	  expect(response.status).toBe(201);
@@ -486,7 +486,7 @@ describe("Server API Tests", () => {
 	  });
 
 	  const response = await apiNoAuth
-		.post("/games/room1/testplayer", 
+		.post("/room1/testplayer", 
 			{ normalMode: true, ghostMode: false, crazyMode: false });
 
 	  expect(response.status).toBe(201);
@@ -501,7 +501,7 @@ describe("Server API Tests", () => {
 
 	  try {
 		const response = await apiNoAuth
-		  .post("/games/room1/nonexistentplayer", 
+		  .post("/room1/nonexistentplayer", 
 			  { normalMode: true, ghostMode: false, crazyMode: false });
 	  } catch (error) {
 		expect(error.response.status).toBe(400);
@@ -810,7 +810,7 @@ describe("Server API Tests", () => {
 		headers: { "Content-Type": "application/json" },
 	  });
 
-	  apiNoAuth.post("/games/testroom/testplayer", {
+	  apiNoAuth.post("/testroom/testplayer", {
 		normalMode: true,
 		ghostMode: false,
 		crazyMode: false

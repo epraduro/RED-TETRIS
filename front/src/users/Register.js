@@ -120,12 +120,12 @@ const Register = () => {
         {/* Login Link */}
         <div className="mt-8 text-center bg-slate-900/60 backdrop-blur-sm border-2 border-indigo-500/50 rounded-lg p-4">
           <p className="text-indigo-200 mb-2">Vous avez déjà un compte ?</p>
-          <a
-            href="/login"
+          <Link
+            to="/login"
             className="inline-flex items-center gap-2 text-violet-300 hover:text-violet-200 transition-colors duration-300 font-medium underline"
           >
             Cliquez ici pour vous connecter
-          </a>
+          </Link>
         </div>
       </div>
     </div>

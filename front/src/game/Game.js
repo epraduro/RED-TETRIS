@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { showToast } from "../Toasts";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -28,10 +28,10 @@ function Game() {
   const createGame = async () => {
     try {
       // const reponse = await axios.post(
-      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`
+      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`
       // );
       const response = await fetch(
-        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/games/${gameName}/${playerName}`,
+        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`,
         {
           method: 'POST',
           headers: {
@@ -208,12 +208,12 @@ function Game() {
 
       {/* Back to Home Link - Top Left */}
       <div className="absolute top-4 left-4 z-20">
-        <a
-          href="/home"
+        <Link
+          to="/home"
           className="inline-flex items-center gap-2 bg-slate-900/60 backdrop-blur-sm border-2 border-indigo-500/50 rounded-lg px-4 py-2 text-violet-300 hover:text-violet-200 transition-colors duration-300 font-medium"
         >
           ← Retour à l'accueil
-        </a>
+        </Link>
       </div>
 
       <div className="relative z-10 w-full max-w-6xl">

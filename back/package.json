@@ -18,15 +18,11 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.8.1",
-    "sqlite3": "^5.1.7",
-    "ws": "^8.18.3"
-  },
-  "optionalDependencies": {
-    "bufferutil": "^4.0.9"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "jest": "^30.2.0",
-    "nodemon": "^3.1.10",
+    "nodemon": "^3.1.11",
     "socket.io-client": "^4.8.3",
     "supertest": "^7.2.2"
   }

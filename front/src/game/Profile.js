@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { showToast } from "../Toasts";
 import { useEffect, useState } from "react";
@@ -161,12 +161,12 @@ function Profile() {
         {/* Back to Home Link */}
         <div className="mt-6 sm:mt-8 text-center w-full">
           <div className="inline-block bg-slate-900/60 backdrop-blur-sm border-2 border-indigo-500/50 rounded-lg p-3 sm:p-4">
-            <a
-              href="/home"
+            <Link
+              to="/home"
               className="inline-flex items-center gap-2 text-violet-300 hover:text-violet-200 transition-colors duration-300 font-medium underline text-sm sm:text-base"
             >
               ← Retour à la page d'accueil
-            </a>
+            </Link>
           </div>
         </div>
       </div>
