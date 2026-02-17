@@ -1,9 +1,8 @@
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
   Routes,
   Route,
   Navigate,
-  BrowserRouter,
 } from "react-router-dom";
 import Home from "./Home";
 import Game from "./game/Game";
@@ -17,17 +16,15 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <Router>
-          <Routes>
-            <Route path='/' element={<Navigate to="/login" replace />}/>
-            <Route path='/home' element={<Home/>}/>
-            <Route path='/register' element={<Register/>} />
-            <Route path='/login' element={<Login/>} />
-            <Route path='/:gameName/:playerName' element={<Game/>} />
-            <Route path="/grid" element={<Grid/>} />
-            <Route path="/profile/:playerName" element={<Profile/>}/>
-          </Routes>
-        </Router>
+        <Routes>
+          <Route path='/' element={<Navigate to="/login" replace />}/>
+          <Route path='/home' element={<Home/>}/>
+          <Route path='/register' element={<Register/>} />
+          <Route path='/login' element={<Login/>} />
+          <Route path='/:gameName/:playerName' element={<Game/>} />
+          <Route path="/grid" element={<Grid/>} />
+          <Route path="/profile/:playerName" element={<Profile/>}/>
+        </Routes>
         <ToastContainer />
       </BrowserRouter>
     </>
