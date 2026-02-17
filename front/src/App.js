@@ -17,7 +17,6 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        <Router>
           <Routes>
             <Route path='/' element={<Navigate to="/login" replace />}/>
             <Route path='/home' element={<Home/>}/>
@@ -27,7 +26,6 @@ function App() {
             <Route path="/grid" element={<Grid/>} />
             <Route path="/profile/:playerName" element={<Profile/>}/>
           </Routes>
-        </Router>
         <ToastContainer />
       </BrowserRouter>
     </>
