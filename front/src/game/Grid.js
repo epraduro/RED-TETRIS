@@ -20,13 +20,6 @@ function Grid({ grid, playerBag, mode }) {
     <div className="flex flex-row h-full">
       {/* GRID */}
       <div className="grid bg-transparent border border-white h-full">
-        {/* <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${grid[0].length}, 30px)`,
-            gridTemplateRows: `repeat(${grid.length}, 30px)`,
-          }}
-        > */}
         <div
           style={{
             display: "grid",

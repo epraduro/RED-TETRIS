@@ -46,19 +46,18 @@ describe("Game", () => {
 
   describe("update()", () => {
     test("gère le bonus quand next() retourne true", () => {
-      const fakeWs = {
-        send: jest.fn(),
-        readyState: WebSocket.OPEN,
+      const fakeSocket = {
+        emit: jest.fn(),
       };
 
-      const player = new Player("Player1", fakeWs);
+      const player = new Player("Player1", fakeSocket);
       player.lose = false;
       player.bonus = 2;
       player.currentPiece = {};
 
       player.movePiece = jest.fn();
 
-      const other = new Player("Player2", fakeWs);
+      const other = new Player("Player2", fakeSocket);
       other.lose = false;
       other.addMalus = jest.fn();
 

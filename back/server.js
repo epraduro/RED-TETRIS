@@ -34,8 +34,6 @@ app.use(express.json());
 // Servir les fichiers statiques du front-end
 app.use(express.static(path.join(__dirname, "../front/build")));
 
-const JWT_SECRET = "71dac283b6f89a9e6251c597c3f5e3c0";
-
 export const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -45,7 +43,7 @@ export const authenticateToken = (req, res, next) => {
       .status(401)
       .json({ error: "Required Token", redirect: "/login" });
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: "Incorrect Token" });
     req.user = user;
     next();
@@ -75,7 +73,7 @@ app.post("/api/register", async (req, res) => {
       return res.status(200).json({ error: "This username is already taken." });
     }
 
-    const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, {
+    const token = jwt.sign({ name: user.name, id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "7h",
     });
 
@@ -118,7 +116,7 @@ app.post("/api/login", async (req, res) => {
       return res.status(200).json({ error: "Incorrect password" });
     if (validPassword === true) {
       if (user.token === null) {
-        const token = jwt.sign({ name: user.name, id: user.id }, JWT_SECRET, {
+        const token = jwt.sign({ name: user.name, id: user.id }, process.env.JWT_SECRET, {
           expiresIn: "7h",
         });
 
@@ -130,7 +128,7 @@ app.post("/api/login", async (req, res) => {
           token,
         });
       } else {
-        await verifyToken(user, JWT_SECRET);
+        await verifyToken(user, process.env.JWT_SECRET);
         const updateUser = await getUser(name);
         return res.status(201).json({
           message: "The player is successfully connected",
