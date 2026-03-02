@@ -427,17 +427,14 @@ describe("Server API Tests", () => {
 		  "Content-Type": "application/json",
 		  "Authorization": `Bearer ${wrongToken}`
 		},
+		validateStatus: () => true
 	  });
 
-	  try {
-		const response = await apiWithWrongToken
-		  .post("/room1/otherplayer",
-			  { normalMode: true, ghostMode: false, crazyMode: false });
-		expect(response.status).toBe(403);
-	  } catch (error) {
-		expect(error.response.status).toBe(403);
-		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
-	  }
+	  const response = await apiWithWrongToken
+		.post("/room1/otherplayer",
+			{ normalMode: true, ghostMode: false, crazyMode: false });
+	  expect(response.status).toBe(403);
+	  expect(response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
 	});
 
 	test("should reject with 403 when player exists in DB but no token is provided", async () => {
@@ -446,17 +443,14 @@ describe("Server API Tests", () => {
 	  const apiNoAuth = axios.create({
 		baseURL: `http://${process.env.HOST}:${process.env.PORT}`,
 		headers: { "Content-Type": "application/json" },
+		validateStatus: () => true
 	  });
 
-	  try {
-		const response = await apiNoAuth
-		  .post("/room1/existingplayer",
-			  { normalMode: true, ghostMode: false, crazyMode: false });
-		expect(response.status).toBe(403);
-	  } catch (error) {
-		expect(error.response.status).toBe(403);
-		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
-	  }
+	  const response = await apiNoAuth
+		.post("/room1/existingplayer",
+			{ normalMode: true, ghostMode: false, crazyMode: false });
+	  expect(response.status).toBe(403);
+	  expect(response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
 	});
 
 	test("should allow authenticated user to create game with normalMode", async () => {
@@ -669,17 +663,14 @@ describe("Server API Tests", () => {
 		  "Content-Type": "application/json",
 		  "Authorization": "Bearer invalidtoken123"
 		},
+		validateStatus: () => true
 	  });
 
-	  try {
-		const response = await apiWithBadToken
-		  .post("/room1/realplayer",
-			  { normalMode: true, ghostMode: false, crazyMode: false });
-		expect(response.status).toBe(403);
-	  } catch (error) {
-		expect(error.response.status).toBe(403);
-		expect(error.response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
-	  }
+	  const response = await apiWithBadToken
+		.post("/room1/realplayer",
+			{ normalMode: true, ghostMode: false, crazyMode: false });
+	  expect(response.status).toBe(403);
+	  expect(response.data).toHaveProperty("error", "This username belongs to another registered user. Please use your own username.");
 	});
 
 	test("should handle error when existing user tries to join without auth", async () => {

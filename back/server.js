@@ -181,7 +181,8 @@ app.post("/api/savegame", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/api/:room/:player_name", async (req, res) => {
+// Handler partagé pour la création de room/game
+const roomPlayerHandler = async (req, res) => {
   const { room, player_name } = req.params;
 
   const { normalMode, ghostMode, crazyMode } = req.body;
@@ -247,7 +248,9 @@ app.post("/api/:room/:player_name", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: `Error server: ${error.message}` });
   }
-});
+};
+
+app.post("/api/:room/:player_name", roomPlayerHandler);
 
 app.get("/api/allgames", authenticateToken, (req, res) => {
   try {
@@ -379,11 +382,7 @@ app.get(/^\/(?!api\/).*/, (req, res) => {
 
 // Proxy route pour servir la route game sans /api dans l'URL
 // Doit être après la route catch-all GET
-app.post("/:room/:player_name", async (req, res, next) => {
-  // Rerouter vers le handler /api/:room/:player_name
-  req.url = `/api${req.url}`;
-  next();
-});
+app.post("/:room/:player_name", roomPlayerHandler);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => {
