@@ -27,23 +27,36 @@ function Game() {
 
   const createGame = async () => {
     try {
-      // const reponse = await axios.post(
-      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`
-      // );
-      const response = await fetch(
-        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`,
+      const token = localStorage.getItem("token");
+      const headers = {};
+      
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
+      const response = await axios.post(
+        `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/${gameName}/${playerName}`,
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            normalMode,
-            ghostMode,
-            crazyMode
-          }),
-        }
+          normalMode,
+          ghostMode,
+          crazyMode
+        },
+        { headers }
       );
+      // const response = await fetch(
+      //   `http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/${gameName}/${playerName}`,
+      //   {
+      //     method: 'POST',
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //     },
+      //     body: JSON.stringify({
+      //       normalMode,
+      //       ghostMode,
+      //       crazyMode
+      //     }),
+      //   }
+      // );
       if (response.status === 201) console.log("game created.");
     } catch {
       showToast("error", "An error has occured!");
@@ -115,7 +128,6 @@ function Game() {
                     },
                   }
                 );
-                console.log("Game saved successfully when player lost");
               } catch (error) {
                 console.error("Failed to save game:", error);
               }
@@ -153,7 +165,6 @@ function Game() {
   };
 
   const restart = async () => {
-    console.log("restart clicked");
     socketRef.current.emit("restart");
   };
 

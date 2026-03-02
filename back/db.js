@@ -42,7 +42,6 @@ export async function addUser(name, password, mode = 'normalMode') {
           if (err) {
             resolve(null)
           } else {
-            console.log(row)
             resolve(row)
           }
         })

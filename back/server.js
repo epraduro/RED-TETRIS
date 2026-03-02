@@ -181,12 +181,10 @@ app.post("/api/savegame", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/:room/:player_name", async (req, res) => {
+app.post("/api/:room/:player_name", async (req, res) => {
   const { room, player_name } = req.params;
 
   const { normalMode, ghostMode, crazyMode } = req.body;
-
-  console.log("crazyMode:", crazyMode);
 
   try {
     let player = await getUser(player_name);
@@ -196,12 +194,13 @@ app.post("/:room/:player_name", async (req, res) => {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1];
     let connectedUser = null;
-
+    
     if (token) {
       try {
         connectedUser = jwt.verify(token, process.env.JWT_SECRET);
       } catch (err) {
-        connectedUser = null;
+        // Token invalide, on continue sans utilisateur connecté
+        console.log("Invalid token:", err.message);
       }
     }
 
@@ -373,8 +372,17 @@ app.get("/api/getgames", authenticateToken, async (req, res) => {
 });
 
 // Route catch-all pour le SPA (doit être après les routes API)
-app.get(/^\/(?!api).*/, (req, res) => {
+// Cette route ne doit servir l'HTML que pour les routes valides du frontend
+app.get(/^\/(?!api\/).*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../front/build", "index.html"));
+});
+
+// Proxy route pour servir la route game sans /api dans l'URL
+// Doit être après la route catch-all GET
+app.post("/:room/:player_name", async (req, res, next) => {
+  // Rerouter vers le handler /api/:room/:player_name
+  req.url = `/api${req.url}`;
+  next();
 });
 
 const PORT = process.env.PORT;

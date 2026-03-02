@@ -6,7 +6,9 @@
   "scripts": {
     "start": "cd front && npm run build && cd ../back && npm start",
     "dev:frontend": "cd front && npm start",
-    "dev:backend": "cd back && npm start"
+    "dev:backend": "cd back && npm start",
+    "setup": "npm install --silent && cd front && npm install --silent && cd ../back && npm install --silent && cd ..",
+    "setup:start": "npm run setup && npm start"
   },
   "keywords": [],
   "author": "",
