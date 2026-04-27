@@ -79,21 +79,6 @@ RED-TETRIS est une implémentation du célèbre jeu Tetris en version multijoueu
  ┣ 📜 package.json </br>
  ┗ 📜 README.md </br>
 
-<h2> Installation </h2>
-
-    git clone https://github.com/epraduro/RED-TETRIS.git
-    cd RED-TETRIS
-    npm install
-
-<h2> Lancer le projet </h2>
-
-    npm run start
-
-<h2> Lancer les tests unitaires </h2>
-
-    cd back
-    npm run test
-
 <h2> Bonus </h2>
 
 Utilisateur: </br>
