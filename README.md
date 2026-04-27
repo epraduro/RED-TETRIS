@@ -14,6 +14,21 @@ RED-TETRIS est une implémentation du célèbre jeu Tetris en version multijoueu
 •  Synchronisation entre joueurs </br>
 •  Gestion des états de jeu </br>
 
+<h2> Aperçu </h2>
+
+<p align="center">
+  <p> Inscription: </p>
+  <img src="inscription.png" width="450">
+  <p> Connexion: </p>
+  <img src="connexion.png" width="450">
+  <p> Page d'accueil avec salle de jeu disponible: </p>
+  <img src="page_accueil2.png" width="450">
+  <p> Salle de jeu: </p>
+  <img src="salle_de_jeu.png" width="450">
+  <p> Page de profil: </p>
+  <img src="page_de_profil.png" width="450">
+</p>
+
 <h2> Gameplay </h2>
 
 •  Les joueurs rejoignent une room </br>
