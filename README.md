@@ -42,9 +42,9 @@ RED-TETRIS est une implémentation du célèbre jeu Tetris en version multijoueu
 
 | Touche  | Action    |
 | ------- | --------- |
-| <p align="center"> A / D ou ⬅️ / ➡️ </p> | <p align="center"> Déplacer </p>|
-| <p align="center"> S ou ⬇️ </p>     | <p align="center"> Accélérer </p>|
-| <p align="center"> W ou ⬆️ </p>     | <p align="center"> Rotation </p>|
+| <p align="center"> ⬅️ / ➡️ </p> | <p align="center"> Déplacer </p>|
+| <p align="center"> ⬇️ </p>     | <p align="center"> Accélérer </p>|
+| <p align="center"> ⬆️ </p>     | <p align="center"> Rotation </p>|
 | <p align="center"> Espace </p> | <p align="center"> Hard drop </p>|
 
 <h2> En solo ou à plusieurs </h2>
