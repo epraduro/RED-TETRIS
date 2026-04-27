@@ -1,70 +1,100 @@
-# Getting Started with Create React App
+<h1> RED_TETRIS </h1>
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<p align="center"> <img src="https://img.shields.io/badge/42-Project-black?style=for-the-badge&logo=42"> <img src="https://img.shields.io/badge/Frontend-JavaScript-yellow?style=for-the-badge&logo=javascript"> <img src="https://img.shields.io/badge/Backend-Node.js-green?style=for-the-badge&logo=node.js"> <img src="https://img.shields.io/badge/RealTime-Socket.io-black?style=for-the-badge"> </p>
 
-## Available Scripts
+<h2> Description </h2>
 
-In the project directory, you can run:
+RED-TETRIS est une implémentation du célèbre jeu Tetris en version multijoueur temps réel, développée dans le cadre du cursus 42.
 
-### `npm start`
+<h2> Objectifs du projet : </h2>
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+•  Création d’un jeu en temps réel </br>
+•  Gestion de WebSockets </br>
+•  Architecture frontend/backend </br>
+•  Synchronisation entre joueurs </br>
+•  Gestion des états de jeu </br>
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+<h2> Gameplay </h2>
 
-### `npm test`
+•  Les joueurs rejoignent une room </br>
+•  Les parties se déroulent en simultané </br>
+•  Le but est de : </br>
+&nbsp;&nbsp;&nbsp;    •  compléter des lignes </br>
+&nbsp;&nbsp;&nbsp;    •  survivre plus longtemps que les autres </br>
+•  Des pénalités peuvent être envoyées aux adversaires </br>
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+<h2> Contrôles </h2>
 
-### `npm run build`
+| Touche  | Action    |
+| ------- | --------- |
+| <p align="center"> A / D ou ⬅️ / ➡️ </p> | <p align="center"> Déplacer </p>|
+| <p align="center"> S ou ⬇️ </p>     | <p align="center"> Accélérer </p>|
+| <p align="center"> W ou ⬆️ </p>     | <p align="center"> Rotation </p>|
+| <p align="center"> Espace </p> | <p align="center"> Hard drop </p>|
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+<h2> En solo ou à plusieurs </h2>
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+<h4> Fonctionnalités: </h4>
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+•  Créer / Rejoindre une room </br>
+•  Synchronisation en temps réel </br>
+•  Pénalisations entre joueurs </br>
+•  Gestion des connexions/déconnexions </br>
 
-### `npm run eject`
+<h4> Features </h4>
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+•  Jeu Tetris d'origine </br>
+•  Système multijoueur temps réel </br>
+•  Communication via Websockets </br>
+•  Architecture client / serveur </br>
+•  Gestion des collisions et rotations </br>
+•  Score / lignes </br>
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+<h2> Architecture </h2>
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+📦 red-tetris </br>
+┣ 📂 back      </br>
+ ┃ ┣ 📂 game   </br>
+ ┃ ┗ 📜 server.js   </br>
+ ┣ 📂 front         </br>
+ ┃ ┣ 📂 src </br>
+ ┃ ┃ ┣ 📂 game  </br>
+ ┃ ┃ ┣ 📂 users </br>
+ ┃ ┃ ┗ 📜 App.js   </br>
+ ┣ 📜 package.json </br>
+ ┗ 📜 README.md </br>
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+<h2> Installation </h2>
 
-## Learn More
+    git clone https://github.com/epraduro/RED-TETRIS.git
+    cd RED-TETRIS
+    npm install
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+<h2> Lancer le projet </h2>
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    npm run start
 
-### Code Splitting
+<h2> Lancer les tests unitaires </h2>
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+    cd back
+    npm run test
 
-### Analyzing the Bundle Size
+<h2> Bonus </h2>
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Utilisateur: </br>
+&nbsp;&nbsp;&nbsp;•  Creation de compte </br>
+&nbsp;&nbsp;&nbsp;•  Page de profil avec historique des parties </br>
 
-### Making a Progressive Web App
+Jeu: </br>
+&nbsp;&nbsp;&nbsp;•  Système de score </br>
+&nbsp;&nbsp;&nbsp;•  Implémentation de différents modes de jeu </br>
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+<h2> Technologies utilisées </h2>
 
-### Advanced Configuration
+•  JavaScript </br>
+•  Node.js </br>
+•  Socket.io </br>
+•  React </br>
+•  Tailwind </br>
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
 
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
