@@ -29,6 +29,19 @@ RED-TETRIS est une implémentation du célèbre jeu Tetris en version multijoueu
   <img src="picture/page_de_profil.png" width="450">
 </p>
 
+<h2> Allez tester par vous même !</h2>
+
+  [http://srv558899.hstgr.cloud:4000](http://srv558899.hstgr.cloud:4000)
+
+  Vous pouvez utiliser le compte déjà créer
+
+ • Nom d'utlisateur: </br>
+  
+    admin
+ • Mot de passe: <br>
+    
+    password
+
 <h2> Gameplay </h2>
 
 •  Les joueurs rejoignent une room </br>
